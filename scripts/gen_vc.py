@@ -57,7 +57,7 @@ def add_start_node(crusade):
   start_node['objective'] = 'N/A'
   start_node['servo'] = 0
   start_node['difficulty'] = 0
-  start_node['appearance'] = 'Start'
+  start_node['appearance'] = 'start'
   crusade['nodes']['start'] = start_node
   return crusade['nodes']
 
