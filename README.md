@@ -1,2 +1,3 @@
-# 40K-void-optimizer
-An optimizer for void crusade pathing in Warhammer 40K: Martyr
+# 40K: Inquisitor Void Crusade Planner
+
+A tool for planning out a better VC path.
