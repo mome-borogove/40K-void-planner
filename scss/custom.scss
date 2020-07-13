@@ -1,0 +1,190 @@
+// Site colors
+$blackish: rgb(26,26,26); // 10%
+$whiteish: rgb(229,229,229); // 90%
+$grayish: rgb(178,178,178); // 75%
+
+$teal_dark: rgb(31,90,86);
+$teal_light: rgb(187,254,250);
+$artifact: rgb(80,26,131);
+$archeo: rgb(184,49,47);
+$ancient: rgb(243,121,52);
+$relic: rgb(198,151,97);
+$morality: rgb(37,169,132);
+
+$secret: rgb(64, 30, 108);
+$hidden: rgb(224, 90, 56);
+$bonus: rgb(0, 100, 132);
+$end: rgb(205,183,102);
+
+$body-bg: $blackish;
+$body-color: $whiteish;
+
+$theme-colors: (
+  'ui': $grayish,
+  'primary': $teal_light,
+  'secondary': $teal_dark,
+  'relic': $relic,
+  'artifact': $artifact,
+  'archeo': $archeo,
+  'ancient': $ancient,
+  'morality': $morality,
+);
+
+@import '../bootstrap/scss/bootstrap';
+//@import '../bootstrap-vue/src/index.scss';
+
+body {
+  font-weight: 300;
+}
+
+h1 {
+  font-family: Orbitron, "Open Sans", sans-serif;
+}
+
+.title {
+  padding-bottom: 10px;
+}
+
+.subtitle {
+  //font-family: Orbitron, "Open Sans", sans-serif;
+  color: $grayish;
+}
+.version {
+  color: $teal_light;
+}
+
+.btn:hover {
+  color: inherit;
+  background-color: inherit;
+}
+
+
+// Crusade selector
+
+#crusade-selector {
+  padding-bottom: 10px;
+}
+
+.crusade-button {
+  height: 50px;
+  background-repeat: no-repeat;
+  background-position: -2px -6px;
+  background-size: 60px 60px;
+  padding-left: 68px;
+  margin-right: 10px;
+}
+
+// Map
+
+#map {
+  width: 100%;
+  // The height-0, padding-bottom thing is a trick to maintain aspect ratio with
+  // responsive container. 1920x1080 is neocore's native coordinate aspect ratio
+  height: 0px; // This is a trick to maintain aspect ratio
+  padding-bottom: 56.25%;
+  padding-top: 0px;
+  padding-right: 0px;
+  padding-left: 0px;
+  border: 1px solid $teal_dark;
+  position: relative;
+  background-color:  black;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+
+$node_h: 60px;
+$node_w: 60px;
+$node_border: 1px;
+
+.node {
+  display: block;
+  position: absolute;
+  height: $node_h;
+  max-height: $node_h;
+  width: $node_w;
+  max-width: $node_w;
+  padding: 0;
+  // Re-positioning trick to let us specify coordinates in %
+  transform: translate(-($node_w/2), -($node_h/2));
+  //border: $node_border solid $teal_dark;
+  border-radius: $node_border*4;
+}
+
+.node.enabled {
+  border-color: $relic;
+}
+
+.node.active {
+  background: $teal_dark;
+}
+
+.node:hover {
+  //border-style: solid;
+  border-color: $teal_light;
+}
+
+.icon {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+
+.icon-faction {
+  background-size: $node_w*.8 $node_h*.8;
+}
+
+.node-order {
+  font-weight: bold;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.node-difficulty {
+  position: absolute;
+  top: 0%;
+  right: 0%;
+  text-align: right;
+}
+
+.node-servo {
+  position: absolute;
+  bottom: 0%;
+  right: 0%;
+  background-image: url(../assets/skull.png);
+  background-size: $node_w/3 $node_h/3;
+  background-position: bottom right;
+}
+
+
+$link_thickness: 4px;
+
+.link-parent {
+  height: 0px;
+  transform-origin: 0% 0%;
+  position: absolute;
+}
+
+.link-centerer {
+  // Correct for .link height: (.link:height)/2
+  margin-bottom: -$link_thickness/2;
+}
+
+.link {
+  width: 100%;
+  height: $link_thickness;
+  background-color: $teal_dark;
+  border: 1px solid black;//$teal_dark;
+}
+
+.link-active {
+  background-color: $teal_light;
+}

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" type="text/css"
+          href="css/custom.css">
+
+    <title>40K Inquisitor Void Crusade Planner</title>
+  </head>
+  <body>
+    <div class="container-xl" id="app">
+      <div class="row">
+        <div class="col">
+          <h1>40K Inquisitor Void Crusade Planner</h1>
+          <!-- Crusade Selector -->
+          <div id="crusade-selector">
+            <span v-for="(c in crusade_list">
+              <button class="btn btn-outline-primary shadow-none crusade-button"
+                v-bind:class="{ 'active': crusade==c[0] }" 
+                v-bind:style="{ 'background-image': 'url(assets/icon_'+c[0]+'.jpg)',
+                  }"
+                @click="crusade=c[0]">
+                {{ capitalize(c[0]) }}
+              </button>
+            </span>
+          </div>
+<!--
+          <div id="plan">
+            <span v-for="(node, index) in nodes">
+              <span class="badge badge-pill"
+                    v-bind:class="{ 'badge-primary': plan.indexOf(node.id)==plan.length-1,
+                                    'badge-secondary': plan.includes(node.id) && plan.indexOf(node.id)<plan.length-1,
+                                    'badge-dark': !plan.includes(node.id)
+                                  }">
+                {{ node.id }}
+              </span>
+            </span>
+            <br>
+            <span v-for="(node, index) in plan">
+              <span class="badge badge-pill"
+                    v-bind:class="{ 'badge-primary': index==plan.length-1,
+                                    'badge-secondary': index<plan.length-1 }">
+                {{ node }}
+              </span>
+            </span>
+          </div >
+-->
+          <div id="map"
+               v-bind:style="{ 'background-image': 'url(assets/bg_'+crusade+'.jpg)' }">
+            <div id="map-grid"></div>
+            <!-- Draw all the connections -->
+            <span v-for="start_node in nodes">
+              <!-- The start node is handled differently -->
+              <span v-for="end_node in nodes">
+                <span v-if="(start_node.deps.includes(end_node.id)) &&
+                            (start_node.id < end_node.id)">
+                  <div class="link-parent"
+                       v-bind:style="{
+                         'left': start_node.x+'%',
+                         'top': start_node.y+'%',
+                         'transform': 'rotate('+angle(start_node,end_node)+'rad)',
+                         'width': distance(start_node,end_node)+'%',
+                         }"><div class="link-centerer"></div><div
+                          v-bind:class="{ 'link': true,
+                            'link-active': (plan.includes(start_node.id) || plan.includes(end_node.id))}"></div></div>
+                </span>
+              </span>
+            </span>
+
+            <!-- Draw all the nodes -->
+            <div
+              class="node"
+              v-for="(node, index) in nodes"
+              v-bind:style="{
+                'left': node.x + '%',
+                'top': node.y + '%',
+              }"
+              @click="toggle_node(node.id)">
+                <!-- mission type icon -->
+                <div class="icon"
+                     v-bind:style="{
+                      'background-image': 'url(assets/appearance_'+node.appearance+'.png)'
+                     }"
+                ></div>
+                <!-- faction icon -->
+                <div class="icon icon-faction"
+                     v-if="(node.id!=0)"
+                     v-bind:style="{
+                       'opacity': plan.includes(node.id)?'25%':'100%',
+                       'background-image': 'url(assets/faction_'+node.faction+'.png)'
+                     }"
+                ></div>
+                <!-- plan order -->
+                <span v-if="(node.id!=0) && plan.includes(node.id)"
+                      class="node-order">
+                  <span style="vertical-align: middle;">
+                    {{plan.indexOf(node.id)}}
+                  </span>
+                </span>
+                <!-- difficulty modifier -->
+                <small><span v-if="node.difficulty>0" class="badge badge-pill badge-danger node-difficulty">+{{node.difficulty}}</span></small>
+                <!-- servoskull available icon -->
+                <div class="icon node-servo" v-if="node.servo"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vue Javascript -->
+    <!-- development version, includes helpful console warnings -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="void_data.js"></script>
+    <!--<script src="data.js"></script>-->
+    <script src="app.js"></script>
+
+    <!-- Bootstrap Javascript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+  </body>
+</html>
