@@ -41,7 +41,6 @@ var app = new Vue({
           return;
         }
         // Okay, let's remove it.
-        console.log('Trying to remove '+id);
         this.plan.splice(this.plan.indexOf(id),1);
         // Move all subsequent plan nodes up one place in the plan
       }
@@ -76,9 +75,6 @@ var app = new Vue({
       return Math.sqrt(dx*dx + dy*dy);
     },
     capitalize: function(s) {
-      console.log(s);
-      console.log(s.slice(0,1));
-      console.log(s.slice(0,1).toUpperCase);
       return s.slice(0,1).toUpperCase() + s.slice(1);
     }
   }
