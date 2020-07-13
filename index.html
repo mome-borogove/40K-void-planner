@@ -23,13 +23,18 @@
                 v-bind:class="{ 'active': crusade==c[0] }" 
                 v-bind:style="{ 'background-image': 'url(assets/icon_'+c[0]+'.jpg)',
                   }"
-                @click="crusade=c[0]">
+                @click="reset_plan(); crusade=c[0]">
                 {{ capitalize(c[0]) }}
               </button>
             </span>
           </div>
-<!--
           <div id="plan">
+            <button class="btn btn-sm btn-ui shadow-node" @click=reset_plan>
+              Reset
+            </button>
+            Current difficulty: +{{ this.current_difficulty }}, 
+            Average difficulty: +{{ this.average_difficulty.toFixed(2) }}
+            <div v-if="debug">
             <span v-for="(node, index) in nodes">
               <span class="badge badge-pill"
                     v-bind:class="{ 'badge-primary': plan.indexOf(node.id)==plan.length-1,
@@ -47,8 +52,9 @@
                 {{ node }}
               </span>
             </span>
-          </div >
--->
+            </div>
+
+          </div>
           <div id="map"
                v-bind:style="{ 'background-image': 'url(assets/bg_'+crusade+'.jpg)' }">
             <div id="map-grid"></div>
@@ -103,8 +109,14 @@
                 </span>
                 <!-- difficulty modifier -->
                 <small><span v-if="node.difficulty>0" class="badge badge-pill badge-danger node-difficulty">+{{node.difficulty}}</span></small>
+                <!-- actual mission difficulty -->
+                <small><span v-if="node.id>=0 && connected(node)" class="badge badge-pill badge-primary node-plan-difficulty">+{{planned_difficulty(node.id)}}</span></small>
+                <!-- info fragment icon -->
+                <div class="icon node-fragment" v-if="node.fragment"></div>
                 <!-- servoskull available icon -->
                 <div class="icon node-servo" v-if="node.servo"></div>
+                <!-- debug modifier -->
+                <small><span v-if="debug" class="badge badge-pill badge-relic node-debug" @click="this.console.log(node);">{{node.id}}<br>{{node.deps}}</span></small>
             </div>
           </div>
         </div>

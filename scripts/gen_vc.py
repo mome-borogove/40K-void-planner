@@ -24,33 +24,38 @@ def flatten_name(s):
   return s
 
 def translate_nodes(nodes):
-  name_map = {}
-  for i,name in enumerate(nodes):
-    name_map[flatten_name(name)] = i
+  #name_map = {}
+  #for n in nodes.values():
+  #  print(n)
+  #  name_map[n['internal_name']] = n['id']
+  name_map = {n['internal_name']:n['id'] for n in nodes.values()}
+  #for i,name in enumerate(nodes):
+  #  name_map[flatten_name(name)] = i
 
   # Start should always be zero
-  if name_map['start']!=0:
-    swap_id = name_map['start']
-    swap_with = [k for k,v in name_map.items() if v==0][0]
-    name_map['start'] = 0
-    name_map[swap_with] = swap_id
+  #if name_map['start']!=0:
+  #  swap_id = name_map['start']
+  #  swap_with = [k for k,v in name_map.items() if v==0][0]
+  #  name_map['start'] = 0
+  #  name_map[swap_with] = swap_id
 
-  new_nodes = deepcopy(nodes)
+  #new_nodes = deepcopy(nodes)
 
-  for name,node in new_nodes.items():
-    node['name'] = flatten_name(name)
-    node['id'] = name_map[flatten_name(name)]
+  for name,node in nodes.items():
+    #node['internal_name'] = flatten_name(name)
+    #node['id'] = name_map[flatten_name(name)]
     if 'neighbors' in node:
       node['deps'] = [name_map[flatten_name(n)] for n in node['neighbors']]
     else:
       node['deps'] = []
 
-  return new_nodes
+  return nodes
 
 def add_start_node(crusade):
   # Add a false node to represent the starting point
   start_node = {}
-  start_node['name'] = 'Start'
+  start_node['internal_name'] = 'start'
+  start_node['id'] = 0
   start_node['x'] = crusade['x']
   start_node['y'] = crusade['y']
   start_node['faction'] = 'N/A'

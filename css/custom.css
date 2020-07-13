@@ -10735,6 +10735,10 @@ h1 {
   margin-right: 10px;
 }
 
+#plan {
+  padding-bottom: 10px;
+}
+
 #map {
   width: 100%;
   height: 0px;
@@ -10798,11 +10802,33 @@ h1 {
   text-align: center;
 }
 
+.node-debug {
+  position: absolute;
+  transform: translate(0px, 20px);
+  bottom: 0%;
+  left: 0%;
+}
+
 .node-difficulty {
   position: absolute;
   top: 0%;
   right: 0%;
   text-align: right;
+}
+
+.node-plan-difficulty {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+}
+
+.node-fragment {
+  position: absolute;
+  bottom: 0%;
+  right: 0%;
+  background-image: url(../assets/fragment.png);
+  background-size: 20px 20px;
+  background-position: bottom left;
 }
 
 .node-servo {

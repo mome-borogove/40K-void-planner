@@ -74,6 +74,12 @@ h1 {
   margin-right: 10px;
 }
 
+// Plan Info
+
+#plan {
+  padding-bottom: 10px;
+}
+
 // Map
 
 #map {
@@ -148,11 +154,33 @@ $node_border: 1px;
   text-align: center;
 }
 
+.node-debug {
+  position: absolute;
+  transform: translate(0px, 20px);
+  bottom: 0%;
+  left: 0%;
+}
+
 .node-difficulty {
   position: absolute;
   top: 0%;
   right: 0%;
   text-align: right;
+}
+
+.node-plan-difficulty {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+}
+
+.node-fragment {
+  position: absolute;
+  bottom: 0%;
+  right: 0%;
+  background-image: url(../assets/fragment.png);
+  background-size: $node_w/3 $node_h/3;
+  background-position: bottom left;
 }
 
 .node-servo {

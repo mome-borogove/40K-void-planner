@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import re
+
 from fsm import FSM 
 from enum import Enum
 
@@ -30,10 +32,26 @@ translation = {
   }
 }
 
+def flatten_name(s):
+  # *sigh* Neocore decided not to have any consistency in naming missions.
+  # So now I have to fix it.
+  s = str.lower(s)
+  # Apparently, even though the missions are named End_Mission_01, the
+  # *neighbor lists* have them listed as EndMission_01....sometimes. Other
+  # times they're End_Mission_01. Yay.
+  s = re.sub('_', '', s)
+  # Aaaaand some names are partially in Hungarian instead of English.
+  # Partially. As in, some of the names are in one language and some in another.
+  s = re.sub(r'rejtett', r'hidden', s)
+  s = re.sub(r'titkos', r'hidden', s)
+  s = re.sub(r'bonusz', r'bonus', s)
+  return s
+
 def set_vc_name(M,D):
   name = str.lower(M[0])
   D['vc'] = { 'nodes': {} }
   D['vc']['name'] = name
+  D['id_counter'] = 1 # We start at 1 so that we can insert Start at 0
   return _S.VC_NAME
 def set_vc_value(key,M,D):
   D['vc'][key] = M[0]
@@ -49,13 +67,15 @@ def commit_vc(M,D):
   return _S.TOP
 
 def set_node_name(M,D):
-  name = str.lower(M[0])
+  name = flatten_name(M[0])
   D['node_name'] = name
   # Sometimes values are mysteriously omitted, so we supply some defaults.
   D['node'] = {
-    'name':name,
+    'internal_name': name,
+    'id': D['id_counter'],
     'difficulty': 0
   }
+  D['id_counter'] += 1
   return _S.NODE_NAME
 def set_node_value(key,M,D):
   D['node'][key] = M[0]

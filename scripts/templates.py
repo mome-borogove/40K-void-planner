@@ -8,8 +8,9 @@ function CrusadeInfo(nodes, index, x, y) {{
   this.y = y;
 }}
 
-function NodeInfo(id, x, y, difficulty, servo, faction, appearance, objective, deps) {{
+function NodeInfo(id, internal_name, x, y, difficulty, servo, faction, appearance, objective, deps) {{
   // id: crusade-unique identifier for this mission
+  // internal_name: the original neocore name for the mission, canonicalized
   // x: x-coordinate, in % from left
   // y: y-coordinate, in % from top
   // difficulty: the increase in mission difficulty
@@ -21,6 +22,7 @@ function NodeInfo(id, x, y, difficulty, servo, faction, appearance, objective, d
   //       signature: f(A), where array A contains integers describing the
   //                  order of the void plan and -1 indicates "not selected"
   this.id = id;
+  this.name = name;
   this.x = x;
   this.y = y;
   this.difficulty = difficulty;
@@ -50,12 +52,13 @@ var {name} = [
   {nodes}
 ];'''
 def format_crusade(vc_name, vc):
-  node_str = ''.join([format_node(v) for k,v in vc['nodes'].items()])
+  sorted_nodes = sorted(vc['nodes'].values(), key=lambda n: n['id'])
+  node_str = ''.join([format_node(v) for v in sorted_nodes])
   return CRUSADE_TEMPLATE.format(name=vc_name, nodes=node_str)
 
 NODE_TEMPLATE = '''
   new NodeInfo(
-    {id},
+    {id},"{internal_name}",
     {x},{y},{difficulty},{servo},
     "{faction}",
     "{appearance}",
