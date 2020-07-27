@@ -22,7 +22,7 @@ function NodeInfo(id, internal_name, x, y, difficulty, servo, faction, appearanc
   //       signature: f(A), where array A contains integers describing the
   //                  order of the void plan and -1 indicates "not selected"
   this.id = id;
-  this.name = name;
+  this.internal_name = internal_name;
   this.x = x;
   this.y = y;
   this.difficulty = difficulty;

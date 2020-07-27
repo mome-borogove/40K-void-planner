@@ -69,6 +69,11 @@ class FSM(object):
   def reset(self):
     self._current_state = self._start
     self._init_state()
+    self._regex_count = 0
+
+  @property
+  def comparisons(self):
+    return self._regex_count
 
   def tracing(self, v):
     if v:
@@ -92,6 +97,7 @@ class FSM(object):
   def __call__(self, input):
     self._trace('In state '+str(self._current_state)+' considering input: '+str(input))
     for regex,func in self._machine[self._current_state]:
+      self._regex_count += 1
       m = re.match(regex,input)
       if m is not None:
         self._trace('Matched '+str(regex)+' and executing '+str(func))

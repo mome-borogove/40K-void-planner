@@ -4,46 +4,15 @@ from copy import deepcopy
 import re
 import sys
 
-from parse_vc import parse_vc
+from parse_map import recursively_parse_maps
+from parse_vc import parse_vc, flatten_name
 from templates import format_file
 
 
-def flatten_name(s):
-  # *sigh* Neocore decided not to have any consistency in naming missions.
-  # So now I have to fix it.
-  s = str.lower(s)
-  # Apparently, even though the missions are named End_Mission_01, the
-  # *neighbor lists* have them listed as EndMission_01....sometimes. Other
-  # times they're End_Mission_01. Yay.
-  s = re.sub('_', '', s)
-  # Aaaaand some names are partially in Hungarian instead of English.
-  # Partially. As in, some of the names are in one language and some in another.
-  s = re.sub(r'rejtett', r'hidden', s)
-  s = re.sub(r'titkos', r'hidden', s)
-  s = re.sub(r'bonusz', r'bonus', s)
-  return s
-
 def translate_nodes(nodes):
-  #name_map = {}
-  #for n in nodes.values():
-  #  print(n)
-  #  name_map[n['internal_name']] = n['id']
   name_map = {n['internal_name']:n['id'] for n in nodes.values()}
-  #for i,name in enumerate(nodes):
-  #  name_map[flatten_name(name)] = i
-
-  # Start should always be zero
-  #if name_map['start']!=0:
-  #  swap_id = name_map['start']
-  #  swap_with = [k for k,v in name_map.items() if v==0][0]
-  #  name_map['start'] = 0
-  #  name_map[swap_with] = swap_id
-
-  #new_nodes = deepcopy(nodes)
 
   for name,node in nodes.items():
-    #node['internal_name'] = flatten_name(name)
-    #node['id'] = name_map[flatten_name(name)]
     if 'neighbors' in node:
       node['deps'] = [name_map[flatten_name(n)] for n in node['neighbors']]
     else:
@@ -82,7 +51,7 @@ def bidirectional_edges(nodes):
     node['deps'] = list(adjacency[node['id']])
   return nodes
 
-def main(voidcrusade_cfg, outputfile):
+def main(voidcrusade_cfg, map_dir, outputfile):
   with open(voidcrusade_cfg) as f:
     crusades = parse_vc(f)
   print(str(len(crusades)), 'void crusades loaded') 
@@ -103,6 +72,7 @@ def main(voidcrusade_cfg, outputfile):
   
 
 if __name__=='__main__':
-  if len(sys.argv)!=3:
-    print('Usage:',sys.argv[0],'Cfg/OpenWorld/voidcrusade.cfg outputfile.js')
+  if len(sys.argv)!=4:
+    print('Usage:',sys.argv[0],'Cfg/OpenWorld/voidcrusade.cfg Cfg/Map/TarotCampaign/ outputfile.js')
+    sys.exit(-1)
   main(*sys.argv[1:])

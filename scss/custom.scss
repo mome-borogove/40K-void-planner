@@ -33,12 +33,21 @@ $theme-colors: (
 @import '../bootstrap/scss/bootstrap';
 //@import '../bootstrap-vue/src/index.scss';
 
+$breakpoint-small: 576px;
+$breakpoint-large: 992px;
+
 body {
   font-weight: 300;
 }
 
 h1 {
   font-family: Orbitron, "Open Sans", sans-serif;
+}
+@media (max-width: $breakpoint-large) {
+  h1 { font-size: 2rem; }
+}
+@media (max-width: $breakpoint-small) {
+  h1 { font-size: 1.5rem; }
 }
 
 .title {
@@ -58,6 +67,20 @@ h1 {
   background-color: inherit;
 }
 
+// Makes text un-selectable.
+// This is really just for node info. If you click too fast on a node, it
+// highlights the text on the plan number, which makes it less readable.
+// There's really no useful way to leverage selecting a single digit of text,
+// so we disable it.
+.no-select {
+  -webkit-touch-callout: none; // iOS Safari
+    -webkit-user-select: none; // Safari
+     -khtml-user-select: none; // Konqueror HTML
+       -moz-user-select: none; // Old versions of Firefox
+        -ms-user-select: none; // Internet Explorer/Edge
+            user-select: none; // Non-prefixed version, currently
+                               // supported by Chrome, Edge, Opera and Firefox */
+}
 
 // Crusade selector
 
@@ -65,19 +88,67 @@ h1 {
   padding-bottom: 10px;
 }
 
-.crusade-button {
-  height: 50px;
-  background-repeat: no-repeat;
-  background-position: -2px -6px;
-  background-size: 60px 60px;
-  padding-left: 68px;
-  margin-right: 10px;
+// This is a bit ugly. It's because the background image is set dynamically
+// with higher CSS priority.
+$selector-height: 60px;
+$selector-height-sm: 30px;
+@media (min-width: $breakpoint-large +1) {
+  .crusade-button-lg {
+    height: $selector-height - 10px;
+    background-repeat: no-repeat;
+    background-position: -2px -6px;
+    background-size: $selector-height $selector-height;
+    padding-left: $selector-height + 8px;
+    margin-right: 10px;
+  }
+  .crusade-button-sm {
+    display: none;
+  }
+}
+@media (max-width: $breakpoint-large) {
+  .crusade-button-lg {
+    display: none;
+  }
+  .crusade-button-sm {
+    height: $selector-height*.5;
+    padding: 5px;
+    margin-right: 5px;
+  }
 }
 
 // Plan Info
 
 #plan {
   padding-bottom: 10px;
+}
+
+// Minimap
+
+.modal-content {
+  background-color: black;
+  border: 2px solid $teal_dark;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+.minimap-close {
+  align: center;
+}
+
+.minimap-resize-box {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.minimap-image {
+  width: 100%;
+  height: 0px;
+  padding-bottom: 56.25%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 // Map
@@ -99,36 +170,81 @@ h1 {
   background-position: center;
 }
 
+#detail {
+  position: absolute;
+  top: 0%;
+  right: 0%;
+  width: 25%;
+  height: 35%;
+  border-left: 1px solid $teal_dark;
+  border-bottom: 1px solid $teal_dark;
+  border-bottom-left-radius: 8px;
+  padding: 0px;
+}
+@media (max-width: $breakpoint-large) {
+  #detail {
+    // For small screens, place it below the map
+    top: 100%;
+    left: 0%;
+    width: 100%;
+    border-radius: 0px;
+    border-right: 1px solid $teal_dark;
+  }
+}
+
+.detail-title {
+  width: 100%;
+  padding: 2px 5px 2px 5px;
+  border-bottom: 1px solid $teal_dark;
+  font-size: 1rem;
+  font-family: Orbitron, "Open Sans", sans-serif;
+  color: $teal_light;
+}
+
+.detail-fact {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.detail-fact-label {
+  color: $teal_light;
+}
+.detail-fact-data {
+  color: white;
+}
+
+
+$node_border: 1px;
+
 $node_h: 60px;
 $node_w: 60px;
-$node_border: 1px;
+//$shrink: 0.66666;
+$shrink: 0.5;
 
 .node {
   display: block;
   position: absolute;
   height: $node_h;
-  max-height: $node_h;
   width: $node_w;
-  max-width: $node_w;
   padding: 0;
   // Re-positioning trick to let us specify coordinates in %
   transform: translate(-($node_w/2), -($node_h/2));
   //border: $node_border solid $teal_dark;
   border-radius: $node_border*4;
 }
-
-.node.enabled {
-  border-color: $relic;
+@media (max-width: $breakpoint-small) {
+  .node{
+    height: $node_h*$shrink;
+    width: $node_w*$shrink;
+    // Re-positioning trick to let us specify coordinates in %
+    transform: translate(-($node_w*$shrink/2), -($node_h*$shrink/2));
+    //border: $node_border solid $teal_dark;
+    //border-radius: $node_border*4;
+  }
 }
 
-.node.active {
-  background: $teal_dark;
-}
-
-.node:hover {
-  //border-style: solid;
-  border-color: $teal_light;
-}
+//.node:hover {
+//  border: $node_border solid $teal_light;
+//}
 
 .icon {
   position: absolute;
@@ -142,7 +258,8 @@ $node_border: 1px;
 }
 
 .icon-faction {
-  background-size: $node_w*.8 $node_h*.8;
+  //background-size: $node_w*.8 $node_h*.8;
+  background-size: 80% 80%;
 }
 
 .node-order {
@@ -154,65 +271,84 @@ $node_border: 1px;
   text-align: center;
 }
 
-.node-debug {
+$badge-font: 60%;
+.node-badge {
   position: absolute;
-  transform: translate(0px, 20px);
+  font-size: $badge-font;
+}
+@media (max-width: $breakpoint-small) {
+  .node-badge {
+    font-size: $badge-font*$shrink*.8;
+  }
+}
+
+.node-badge-debug {
+  position: absolute;
+  transform: translate(0, -50%);
   bottom: 0%;
   left: 0%;
 }
 
-.node-difficulty {
+.node-badge-difficulty {
   position: absolute;
   top: 0%;
   right: 0%;
   text-align: right;
 }
 
-.node-plan-difficulty {
+.node-badge-snapshot {
   position: absolute;
   top: 0%;
   left: 0%;
 }
 
-.node-fragment {
-  position: absolute;
-  bottom: 0%;
-  right: 0%;
+.node-icon {
+}
+
+.node-icon-fragment {
   background-image: url(../assets/fragment.png);
-  background-size: $node_w/3 $node_h/3;
+  background-size: 40% 40%;
+  //background-size: $node_w/3 $node_h/3;
   background-position: bottom left;
 }
 
-.node-servo {
-  position: absolute;
-  bottom: 0%;
-  right: 0%;
+.node-icon-servo {
   background-image: url(../assets/skull.png);
-  background-size: $node_w/3 $node_h/3;
+  background-size: 35% 35%;
+  //background-size: $node_w/3 $node_h/3;
   background-position: bottom right;
 }
 
 
-$link_thickness: 4px;
+$edge_thickness: 6px;
 
-.link-parent {
+.edge-parent {
   height: 0px;
   transform-origin: 0% 0%;
   position: absolute;
 }
 
-.link-centerer {
-  // Correct for .link height: (.link:height)/2
-  margin-bottom: -$link_thickness/2;
+.edge-centerer {
+  // Correct for .edge height: (.edge:height)/2
+  margin-bottom: -$edge_thickness/2;
 }
 
-.link {
+$edge_on: $teal_light;
+$edge_off: black;
+$edge_edge: $teal_dark;
+
+.edge {
   width: 100%;
-  height: $link_thickness;
-  background-color: $teal_dark;
-  border: 1px solid black;//$teal_dark;
+  height: $edge_thickness;
+  background: $edge_off;
+  border: 1px solid $edge_edge;
 }
-
-.link-active {
-  background-color: $teal_light;
+.edge-active {
+  background: $edge_on;
+}
+.edge-on2off {
+  background: linear-gradient(to right, $edge_on 30%, $edge_off 70%);
+}
+.edge-off2on {
+  background: linear-gradient(to left, $edge_on 30%, $edge_off 70%);
 }

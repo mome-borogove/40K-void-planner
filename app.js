@@ -6,6 +6,8 @@ var app = new Vue({
   data: {
     debug: false,
     crusade: "ivory",
+    detail_id: 0,
+    minimap_modal: false,
     plan: [0],
   },
   computed: {
@@ -14,6 +16,9 @@ var app = new Vue({
     },
     nodes: function() {
       return crusade_data.get(this.crusade).nodes;
+    },
+    detail: function() {
+      return this.nodes[this.detail_id];
     },
     crusade_list: function() {
       return crusade_data;
@@ -25,11 +30,36 @@ var app = new Vue({
       return this.plan.reduce( (acc,id) => acc+this.planned_difficulty(id) )/this.plan.length;
     }
   },
+  created: function() {
+    document.addEventListener('keydown', this.hide_minimap);
+  },
+  destroyed: function() {
+    document.removeEventListener('keydown', this.hide_minimap);
+  },
   methods: {
     reset_plan: function() {
       this.plan = [0];
+      this.detail_id = 0;
+    },
+    show_minimap: function(event, id) {
+      event.preventDefault();
+      if (id==0) { // Never show the start node.
+        return;
+      }
+      this.minimap_modal = true;
+    },
+    hide_minimap: function(event) {
+      if (event) {
+        if (event.code!="Escape") {
+          return;
+        } else {
+          event.preventDefault();
+        }
+      }
+      this.minimap_modal = false;
     },
     toggle_node: function(id) {
+      console.log("click");
       if (id==0) { // Never toggle the start node.
         return;
       }

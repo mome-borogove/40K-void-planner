@@ -9,6 +9,20 @@
     <link rel="stylesheet" type="text/css"
           href="css/custom.css">
 
+    <!-- Fonts -->
+    <link rel="stylesheet" type="text/css"
+          href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Orbitron&display=swap">
+
+    <!-- Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-29492860-9"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'UA-29492860-9');
+    </script>
+
     <title>40K Inquisitor Void Crusade Planner</title>
   </head>
   <body>
@@ -19,17 +33,22 @@
           <!-- Crusade Selector -->
           <div id="crusade-selector">
             <span v-for="(c in crusade_list">
-              <button class="btn btn-outline-primary shadow-none crusade-button"
-                v-bind:class="{ 'active': crusade==c[0] }" 
-                v-bind:style="{ 'background-image': 'url(assets/icon_'+c[0]+'.jpg)',
+              <button class="btn btn-outline-primary shadow-none crusade-button-lg"
+                :class="{ 'active': crusade==c[0] }" 
+                :style="{ 'background-image': 'url(assets/icon_'+c[0]+'.jpg)',
                   }"
                 @click="reset_plan(); crusade=c[0]">
                 {{ capitalize(c[0]) }}
+              <button class="btn btn-outline-primary shadow-none crusade-button-sm"
+                v-bind:class="{ 'active': crusade==c[0] }" 
+                @click="reset_plan(); crusade=c[0]">
+                {{ capitalize(c[0]) }}
+              </button>
               </button>
             </span>
           </div>
           <div id="plan">
-            <button class="btn btn-sm btn-ui shadow-node" @click=reset_plan>
+            <button class="btn btn-sm btn-ui shadow-none" @click=reset_plan>
               Reset
             </button>
             Current difficulty: +{{ this.current_difficulty }}, 
@@ -56,36 +75,40 @@
 
           </div>
           <div id="map"
-               v-bind:style="{ 'background-image': 'url(assets/bg_'+crusade+'.jpg)' }">
-            <div id="map-grid"></div>
-            <!-- Draw all the connections -->
+               :style="{ 'background-image': 'url(assets/bg_'+crusade+'.jpg)' }"
+               @contextmenu.prevent>
+            <!-- Draw all the edges -->
             <span v-for="start_node in nodes">
-              <!-- The start node is handled differently -->
               <span v-for="end_node in nodes">
                 <span v-if="(start_node.deps.includes(end_node.id)) &&
                             (start_node.id < end_node.id)">
-                  <div class="link-parent"
+                  <div class="edge-parent"
                        v-bind:style="{
                          'left': start_node.x+'%',
                          'top': start_node.y+'%',
                          'transform': 'rotate('+angle(start_node,end_node)+'rad)',
                          'width': distance(start_node,end_node)+'%',
-                         }"><div class="link-centerer"></div><div
-                          v-bind:class="{ 'link': true,
-                            'link-active': (plan.includes(start_node.id) || plan.includes(end_node.id))}"></div></div>
+                         }"><div class="edge-centerer"></div><div
+                          v-bind:class="{ 'edge': true,
+                            'edge-active': (plan.includes(start_node.id) && plan.includes(end_node.id)),
+                            'edge-off2on': (!plan.includes(start_node.id) && plan.includes(end_node.id)),
+                            'edge-on2off': (plan.includes(start_node.id) && !plan.includes(end_node.id)),
+                          }"></div></div>
                 </span>
               </span>
             </span>
 
             <!-- Draw all the nodes -->
             <div
-              class="node"
+              class="node no-select"
               v-for="(node, index) in nodes"
               v-bind:style="{
                 'left': node.x + '%',
                 'top': node.y + '%',
               }"
-              @click="toggle_node(node.id)">
+              @mouseover="detail_id=node.id"
+              @click="toggle_node(node.id)"
+              @contextmenu="show_minimap($event,node.id)">
                 <!-- mission type icon -->
                 <div class="icon"
                      v-bind:style="{
@@ -107,16 +130,70 @@
                     {{plan.indexOf(node.id)}}
                   </span>
                 </span>
-                <!-- difficulty modifier -->
-                <small><span v-if="node.difficulty>0" class="badge badge-pill badge-danger node-difficulty">+{{node.difficulty}}</span></small>
-                <!-- actual mission difficulty -->
-                <small><span v-if="node.id>=0 && connected(node)" class="badge badge-pill badge-primary node-plan-difficulty">+{{planned_difficulty(node.id)}}</span></small>
-                <!-- info fragment icon -->
-                <div class="icon node-fragment" v-if="node.fragment"></div>
                 <!-- servoskull available icon -->
-                <div class="icon node-servo" v-if="node.servo"></div>
+                <div class="icon node-icon node-icon-servo" v-if="node.servo"></div>
+                <!-- info fragment icon -->
+                <div class="icon node-icon node-icon-fragment" v-if="node.fragment"></div>
+                <!-- difficulty modifier -->
+                <span v-if="node.difficulty>0" class="badge badge-pill badge-danger node-badge node-badge-difficulty">+{{node.difficulty}}</span>
+                <!-- actual mission difficulty -->
+                <span v-if="node.id>=0 && connected(node)" class="badge badge-pill badge-primary node-badge node-badge-snapshot">+{{planned_difficulty(node.id)}}</span>
                 <!-- debug modifier -->
-                <small><span v-if="debug" class="badge badge-pill badge-relic node-debug" @click="this.console.log(node);">{{node.id}}<br>{{node.deps}}</span></small>
+                <span v-if="debug" class="badge badge-pill badge-relic node-badge node-badge-debug" @click="this.console.log(node);">{{node.id}}<br>{{node.fragment}}</span>
+            </div>
+            <!-- Detail Panel -->
+            <div id="detail">
+              <div class="detail-title">
+                <span v-bind:style="{
+                  'visibility': (detail.id>0) ? 'visible' : 'hidden',
+
+                }">"{{detail.internal_name}}"</span>
+              </div>
+              <span v-if="detail.id>0">
+                <div class="detail-fact">
+                  <span class="detail-fact-label">Faction:</span>
+                  <span class="detail-fact-data">{{ detail.faction }}</span>
+                </div>
+                <div class="detail-fact">
+                  <span class="detail-fact-label">Objective:</span>
+                  <span class="detail-fact-data">{{ detail.objective }}</span>
+                </div>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Mission Minimap Pop-up -->
+      <!-- backdrop -->
+      <div v-if="minimap_modal" class="modal-backdrop show"
+           @contextmenu.prevent
+         ></div>
+      <!-- minimap modal -->
+      <div id="minimap"
+           class="modal"
+           :class="{ 'show': minimap_modal,
+                     'd-block': minimap_modal }"
+           role="dialog"
+           tabindex="-1"
+           @click="hide_minimap()"
+           @contextmenu="hide_minimap($event)">
+        <div class="modal-dialog modal-xl modal-dialog-centered"
+             @click.stop
+             @contextmenu.stop>
+          <div class="modal-content">
+            <div class="modal-body"
+                 v-if="minimap_modal">
+              <div class="modal-title detail-title">{{detail.internal_name}}</div>
+              <div class="minimap-resize-box">
+                <div class="minimap-image"
+                     :style="{ 'background-image': 'url(assets/minimaps/'+crusade+'/'+detail.internal_name+'.png)' }"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-secondary mx-auto d-block"
+                      @click="hide_minimap()"
+                >Close</button>
             </div>
           </div>
         </div>
@@ -127,7 +204,6 @@
     <!-- development version, includes helpful console warnings -->
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="void_data.js"></script>
-    <!--<script src="data.js"></script>-->
     <script src="app.js"></script>
 
     <!-- Bootstrap Javascript -->

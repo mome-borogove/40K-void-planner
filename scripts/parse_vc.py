@@ -29,6 +29,28 @@ translation = {
     'Hidden': 'covert',
     'Normal': 'normal',
     'Secret': 'secret',
+  },
+  'objective': {
+    'Assassination': 'Assassination',
+    'Bunkerbusting': 'Bunker busting',
+    'Datahunt': 'Data hunt',
+    'Forcefield': 'Secure the artifact',
+    'GeneratorDestroy': 'Destroy the generator',
+    'HotPursuit': 'Hot pursuit',
+    'Hunt': 'Hunt',
+    'Incursion': 'Daemonic Incursion',
+    'IntelPursuit': 'Intel Pursuit',
+    'NurgleHunt': 'Nurgle Hunt',
+    'Nurgle_Infestation': 'Nurgle Infestation',
+    'PanicRoom': 'Panic Room',
+    'Purge': 'Purge',
+    'Rescue': 'Rescue',
+    'Siege': 'Siege',
+    'silencethegun': 'Silence the guns',
+    'Silencethegun': 'Silence the guns',
+    'SporocystAssault': 'Sporocyst Assault',
+    'Tarot_Hunt': 'Callous Hunt',
+    'Tarot_Purge': 'Infested Station',
   }
 }
 
@@ -43,8 +65,14 @@ def flatten_name(s):
   # Aaaaand some names are partially in Hungarian instead of English.
   # Partially. As in, some of the names are in one language and some in another.
   s = re.sub(r'rejtett', r'hidden', s)
-  s = re.sub(r'titkos', r'hidden', s)
+  s = re.sub(r'titkos', r'secret', s)
   s = re.sub(r'bonusz', r'bonus', s)
+  # Greek is different in Hungarian. >_<
+  s = re.sub(r'alfa', r'alpha', s)
+  # Sometimes "basic" is prefixed to normal missions.
+  s = re.sub(r'basic', r'', s)
+  # They're inconsistent with the use of leading zeros.
+  s = re.sub(r'([^0-9])0+', r'\1', s)
   return s
 
 def set_vc_name(M,D):
@@ -73,7 +101,9 @@ def set_node_name(M,D):
   D['node'] = {
     'internal_name': name,
     'id': D['id_counter'],
-    'difficulty': 0
+    # Apparently there's a single Ivory map without a difficulty setting.
+    # Since it appears as a +1, perhaps the game's internal "default" is 1?
+    'difficulty': 1
   }
   D['id_counter'] += 1
   return _S.NODE_NAME
@@ -120,7 +150,7 @@ machine = {
     (r'Type=(.*)', lambda M,D: translate_value('appearance',M,D)),
     (r'Pos=(.*)', set_node_position),
     (r'MonsterSetting=(.*)', lambda M,D: translate_value('faction',M,D)),
-    (r'MissionType=(.*)', lambda M,D: set_node_value('objective',M,D)),
+    (r'MissionType=(.*)', lambda M,D: translate_value('objective',M,D)),
     (r'Neighbours=(.*)', set_node_neighbors),
     (r'Difficulty=(.*)', lambda M,D: set_node_value('difficulty',M,D)),
     (r'CanSpawnWS=(.*)', lambda M,D: set_node_value('servo',M,D)),
