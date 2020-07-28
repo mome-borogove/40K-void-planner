@@ -4,13 +4,22 @@
 var app = new Vue({
   el: "#app",
   data: {
+    // Non-linkable state
     debug: false,
-    crusade: "ivory",
-    detail_id: 0,
     minimap_modal: false,
+    detail_id: 0,
+    // Link-encoded state
+    crusade: "ivory",
     plan: [0],
   },
   computed: {
+    permalink: function() {
+      // This function must be kept in sync with the section of created()
+      let params = new URLSearchParams("");
+      params.set("c",this.crusade);
+      params.set("p",this.plan.join('-'));
+      return params.toString();
+    },
     crusade_info: function() {
       return crusade_data.get(this.crusade);
     },
@@ -31,12 +40,53 @@ var app = new Vue({
     }
   },
   created: function() {
+    // This section must be kept in sync with the permalink() computed function
+    let url = window.location.search;
+    let params = new URLSearchParams(url);
+    let crusade = String(params.get("c")).toLowerCase();
+    // Sanitize and set crusade
+    if (Array.from(crusade_data.keys()).includes(crusade)) {
+      this.crusade = crusade;
+      // Sanitize and set plan
+      let plan_string = params.get("p");
+      if (plan_string) {
+        let plan = plan_string.split('-').map(x=>parseInt(x,10));
+        let uniques = Array.from(plan.reduce((acc,val)=>acc.has(val)?acc:acc.set(val,1), new Map()).keys());
+        let n_missions = crusade_data.get(this.crusade).nodes.length;
+        if (plan.length==uniques.length &&
+            plan.length>=1 &&
+            plan.length<=n_missions &&
+            plan.every(x=>!isNaN(x))) {
+          this.plan = plan;
+        }
+      } else {
+        console.log("Invalid plan specified. Reverting to default.");
+      }
+    } else {
+      console.log("Invalid crusade specified. Reverting to default.");
+    }
+
+    // Update the URL. If it was valid, nothing changes.
+    this.update_url();
+
+    // Set up the modal-escape keybind.
     document.addEventListener('keydown', this.hide_minimap);
   },
+  watch: { // All link-encoded states need to be watched.
+    crusade: function () { this.update_url(); },
+    plan: function () { this.update_url(); }
+  },
   destroyed: function() {
+    // Tear down the modal-escape keybind.
     document.removeEventListener('keydown', this.hide_minimap);
   },
   methods: {
+    current_url: function(event) {
+      return window.location;
+    },
+    update_url: function() {
+      window.history.replaceState(null, null, "?"+this.permalink);
+    },
     reset_plan: function() {
       this.plan = [0];
       this.detail_id = 0;
@@ -59,7 +109,6 @@ var app = new Vue({
       this.minimap_modal = false;
     },
     toggle_node: function(id) {
-      console.log("click");
       if (id==0) { // Never toggle the start node.
         return;
       }
