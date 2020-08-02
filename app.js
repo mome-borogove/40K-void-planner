@@ -8,6 +8,9 @@ var app = new Vue({
     debug: false,
     minimap_modal: false,
     detail_id: 0,
+    minimap_vc_visible: true,
+    minimap_objectives_visible: true,
+    minimap_enemies_visible: false,
     // Link-encoded state
     crusade: "ivory",
     plan: [0],
@@ -31,6 +34,44 @@ var app = new Vue({
     },
     crusade_list: function() {
       return crusade_data;
+    },
+    // Minimap constants
+    map_scaling: function() {
+      let node = this.nodes[this.detail_id];
+      let map_w = node.map_w;
+      let map_h = node.map_h;
+      let x0 = 0;
+      let y0 = 0;
+      let x_scale = 1;
+      let y_scale = 1;
+      if (map_w/map_h > 16/9.) {
+        // Too wide, compress and shift y-dimension.
+        let actual_map_h = map_w*9/16.;
+        y_scale = map_h/actual_map_h;
+        y0 = (actual_map_h-map_h)/(2*actual_map_h);
+      } else {
+        // Too tall, compress and shift x-dimension.
+        let actual_map_w = map_h*16/9.;
+        x_scale = map_w/actual_map_w;
+        x0 = (actual_map_w-map_w)/(2*actual_map_w);
+      }
+      return [x0,y0,x_scale,y_scale];
+    },
+    // Plan-aggregate summary stats
+    planned_loot_quality: function() {
+      return this.plan.reduce( (acc,id) => acc+this.nodes[id].loot_quality, 0)
+    },
+    planned_loot_quantity: function() {
+      return this.plan.reduce( (acc,id) => acc+this.nodes[id].loot_quantity, 0)
+    },
+    planned_loot_rarity: function() {
+      return this.plan.reduce( (acc,id) => acc+this.nodes[id].loot_rarity, 0)
+    },
+    planned_fragments: function() {
+      return this.plan.reduce( (acc,id) => this.nodes[id].fragment?acc+1:acc, 0)
+    },
+    max_difficulty: function() {
+      return this.plan.reduce( (acc,id) => this.planned_difficulty(id)>acc?this.planned_difficulty(id):acc );
     },
     current_difficulty: function() {
       return this.plan.reduce( (acc,id) => acc+this.nodes[id].difficulty, 0)
@@ -107,6 +148,22 @@ var app = new Vue({
         }
       }
       this.minimap_modal = false;
+    },
+    transform_map_x_coord: function(id, x) {
+      let x0, y0, x_scale, y_scale;
+      [x0, y0, x_scale, y_scale] = this.map_scaling;
+      let new_x = (x - this.nodes[id].map_x)/this.nodes[id].map_w;
+      new_x = x_scale * new_x + x0;
+      new_x = 100 * new_x; // As a %
+      return new_x; // As a %
+    },
+    transform_map_y_coord: function(id, y) {
+      let x0, y0, x_scale, y_scale;
+      [x0, y0, x_scale, y_scale] = this.map_scaling;
+      let new_y = (y - this.nodes[id].map_y)/this.nodes[id].map_h;
+      new_y = y_scale * new_y + y0;
+      new_y = 100 * new_y; // As a %
+      return new_y;
     },
     toggle_node: function(id) {
       if (id==0) { // Never toggle the start node.

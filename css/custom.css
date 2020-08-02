@@ -10752,7 +10752,7 @@ h1 {
     background-position: -2px -6px;
     background-size: 60px 60px;
     padding-left: 68px;
-    margin-right: 10px;
+    margin-right: 5px;
   }
 
   .crusade-button-sm {
@@ -10779,12 +10779,48 @@ h1 {
   border: 2px solid #1f5a56;
 }
 
+.modal-header {
+  width: 100%;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 9px;
+  padding-right: 9px;
+  font-size: 1.5rem;
+  font-family: Orbitron, "Open Sans", sans-serif;
+  color: #bbfefa;
+  border-bottom: 2px solid #1f5a56;
+  background-color: #343a40;
+}
+
+.modal-body {
+  padding: 0px;
+  padding-bottom: 3px;
+}
+
 .modal-footer {
+  padding: 0px;
+  align: center;
   border-top: none;
 }
 
-.minimap-close {
-  align: center;
+.minimap-close-button {
+  width: 100%;
+  margin: 0px;
+  border-radius: 0px;
+  padding: 3px;
+}
+
+.minimap-control-block {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  text-align: center;
+}
+
+.minimap-control {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 9px;
+  padding-right: 9px;
 }
 
 .minimap-resize-box {
@@ -10793,12 +10829,51 @@ h1 {
 }
 
 .minimap-image {
+  position: relative;
   width: 100%;
   height: 0px;
   padding-bottom: 56.25%;
+  padding-left: 0px;
+  padding-right: 0px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+}
+
+.minimap-marker {
+  display: block;
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border: 2px solid white;
+  border-radius: 16px;
+  padding: 0px;
+  transform: translate(-16px, -16px);
+  background-color: black;
+  background-size: contain, contain;
+  background-repeat: no-repeat, no-repeat;
+  background-position: center, center;
+}
+
+.minimap-marker.minimap-marker-enemy {
+  width: 10.6666666667px;
+  height: 10.6666666667px;
+  transform: translate(-5.3333333333px, -5.3333333333px);
+  border: none;
+  background-color: #b8312f;
+}
+
+.minimap-marker-fragment {
+  border-color: white;
+  background-image: url(../assets/fragment.png);
+}
+
+.minimap-marker-origin {
+  background-image: url(../assets/square.png);
+}
+
+.minimap-marker-origin2 {
+  background-image: url(../assets/square2.png);
 }
 
 #map {

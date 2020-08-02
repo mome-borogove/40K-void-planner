@@ -1,69 +1,83 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy
+import os
 import re
 import sys
 
-from parse_map import recursively_parse_maps
-from parse_vc import parse_vc, flatten_name
+from parse_map import get_map_data, AUG_DEFAULTS
+from parse_vc import get_vc_data, flatten_name
 from templates import format_file
 
+def recursively_parse_missions(mission_directory):
+  # The map directory structure is:
+  # . 
+  #  \-- Ivory
+  #     basicmission_1.cfg
+  #     basicmission_2.cfg
+  #     ...
+  #  \-- Ebony
+  #     ...
+  maps = {}
 
-def translate_nodes(nodes):
-  name_map = {n['internal_name']:n['id'] for n in nodes.values()}
+  for vc_directory in os.listdir(mission_directory):
+    vc_dir = os.path.join(mission_directory, vc_directory)
+    print(vc_dir)
+  #vc_dir = mission_directory
+    vc_name = str.lower(os.path.split(os.path.abspath(vc_dir))[-1])
+    maps[vc_name] = {}
+    for map_file in os.listdir(vc_dir):
+      if map_file.endswith('.cfg'):
+        with open(os.path.join(vc_dir, map_file)) as f:
+          # strip '.cfg' suffix and flatten
+          map_name = flatten_name(os.path.split(os.path.abspath(f.name))[-1][:-4])
+          v = get_map_data(f)
+          maps[vc_name][map_name] = v
+          if 'fragment_x' in v:
+            print(map_name, v['fragment_x'], v['fragment_y'])
+  return maps   
 
-  for name,node in nodes.items():
-    if 'neighbors' in node:
-      node['deps'] = [name_map[flatten_name(n)] for n in node['neighbors']]
+def associate_missions_with_ids(crusades, missions):
+  name2id = {vc_name:{node['internal_name']:node['id'] for node in vc_info['nodes'].values()} for vc_name,vc_info in crusades.items()}
+  # fill in each mission's ID
+  for vc_name,vc_info in missions.items():
+    for mission_name, mission_info in vc_info.items():
+      mission_info['id'] = name2id[vc_name][mission_name]
+  return missions
+
+def augment_crusade(crusade, missions):
+  # Add mission data parsed from the mission's map config file to the mission
+  # data parsed from the main void crusade config file.
+  for mission_name in crusade['nodes'].keys():
+    if mission_name not in missions:
+      mission_info = deepcopy(AUG_DEFAULTS)
+      print('Using defaults for',mission_name)
     else:
-      node['deps'] = []
+      mission_info = missions[mission_name]
+    for key in [
+        'map_x', 'map_y', 'map_w', 'map_h',
+        'fragment_x', 'fragment_y', 'fragment',
+        'req_unlocks', 'opt_unlocks', 'enemies' ]:
+      crusade['nodes'][mission_name][key] = mission_info[key]
+  return crusade
 
-  return nodes
-
-def add_start_node(crusade):
-  # Add a false node to represent the starting point
-  start_node = {}
-  start_node['internal_name'] = 'start'
-  start_node['id'] = 0
-  start_node['x'] = crusade['x']
-  start_node['y'] = crusade['y']
-  start_node['faction'] = 'N/A'
-  start_node['objective'] = 'N/A'
-  start_node['servo'] = 0
-  start_node['difficulty'] = 0
-  start_node['appearance'] = 'start'
-  crusade['nodes']['start'] = start_node
-  return crusade['nodes']
-
-def bidirectional_edges(nodes):
-  # Initialize from unidirectional lists
-  adjacency = { node['id']:set(node['deps']) for node in nodes.values() }
-  # Add from bidirectional adjacency list
-  for node in nodes.values():
-    for neighbor in node['deps']:
-      adjacency[neighbor].add(node['id'])
-  # verify
-  for id,adjs in adjacency.items():
-    for adj in adjs:
-      assert id in adjacency[adj], '{0} missing from {1} (actual: {2})'.format(id,adj,adjacency[adj])
-  # Add from bidirectional adjacency list
-  for node in nodes.values():
-    node['deps'] = list(adjacency[node['id']])
-  return nodes
-
-def main(voidcrusade_cfg, map_dir, outputfile):
+def main(voidcrusade_cfg, mission_dir, outputfile):
+  # Grab VC data
   with open(voidcrusade_cfg) as f:
-    crusades = parse_vc(f)
+    crusades = get_vc_data(f)
   print(str(len(crusades)), 'void crusades loaded') 
   print(str(sum([len(v['nodes']) for k,v in crusades.items()])), 'missions loaded')
 
-  # Substitute mission indices for names
-  for crusade in crusades.values():
-    print('------------------------------CRUSADE------------------------------')
-    print(crusade['name'])
-    crusade['nodes'] = add_start_node(crusade)
-    crusade['nodes'] = translate_nodes(crusade['nodes'])
-    crusade['nodes'] = bidirectional_edges(crusade['nodes'])
+  # Grab mission data
+  missions = recursively_parse_missions(mission_dir)
+  print(str(len(missions)),'missions loaded')
+
+  # Mission files don't know their own ID. Fill it in.
+  missions = associate_missions_with_ids(crusades, missions)
+
+  # Update mission info in crusade data
+  for vc_name in crusades.keys():
+    crusades[vc_name] = augment_crusade(crusades[vc_name], missions[vc_name])
 
   # Write out a javascript data file
   with open(outputfile, 'w') as f:

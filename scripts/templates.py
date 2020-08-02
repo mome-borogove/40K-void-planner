@@ -8,7 +8,7 @@ function CrusadeInfo(nodes, index, x, y) {{
   this.y = y;
 }}
 
-function NodeInfo(id, internal_name, x, y, difficulty, servo, faction, appearance, objective, deps) {{
+function NodeInfo(id, internal_name, x, y, map_x, map_y, map_w, map_h, difficulty, servo, fragment, fragment_x, fragment_y, loot_quality, loot_quantity, loot_rarity, faction, appearance, objective, deps, enemies) {{
   // id: crusade-unique identifier for this mission
   // internal_name: the original neocore name for the mission, canonicalized
   // x: x-coordinate, in % from left
@@ -25,12 +25,23 @@ function NodeInfo(id, internal_name, x, y, difficulty, servo, faction, appearanc
   this.internal_name = internal_name;
   this.x = x;
   this.y = y;
+  this.map_x = map_x;
+  this.map_y = map_y;
+  this.map_w = map_w;
+  this.map_h = map_h;
   this.difficulty = difficulty;
   this.servo = servo;
+  this.fragment = fragment;
+  this.fragment_x = fragment_x;
+  this.fragment_y = fragment_y;
+  this.loot_quality = loot_quality;
+  this.loot_quantity = loot_quantity;
+  this.loot_rarity = loot_rarity;
   this.faction = faction;
-  this.objective = objective;
   this.appearance = appearance;
+  this.objective = objective;
   this.deps = deps;
+  this.enemies = enemies;
 }}
 
 {crusades}
@@ -59,12 +70,20 @@ def format_crusade(vc_name, vc):
 NODE_TEMPLATE = '''
   new NodeInfo(
     {id},"{internal_name}",
-    {x},{y},{difficulty},{servo},
+    {x},{y},{map_x},{map_y},{map_w},{map_h},
+    {difficulty},{servo},{fragment_bool},{fragment_x},{fragment_y},
+    {loot_quality},{loot_quantity},{loot_rarity},
     "{faction}",
     "{appearance}",
     "{objective}",
-    [{dep_str}]),'''
+    [{dep_str}],
+    [{enemy_str}]),'''
 def format_node(nodeinfo):
   s = NODE_TEMPLATE
   dep_str = ', '.join([str(n) for n in nodeinfo['deps']])
-  return s.format(**nodeinfo, dep_str=dep_str)
+  enemy_str = ', '.join(['['+str(x)+','+str(y)+']' for x,y in nodeinfo['enemies']])
+  if nodeinfo['fragment']:
+    fragment_bool = 'true'
+  else:
+    fragment_bool = 'false'
+  return s.format(**nodeinfo, fragment_bool=fragment_bool, dep_str=dep_str, enemy_str=enemy_str)

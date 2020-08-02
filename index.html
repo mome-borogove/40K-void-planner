@@ -19,7 +19,7 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-    
+
       gtag('config', 'UA-29492860-9');
     </script>
 
@@ -30,49 +30,37 @@
       <div class="row">
         <div class="col">
           <h1>40K Inquisitor Void Crusade Planner</h1>
+          <div v-if="debug"
+               style="background-color: #A00; text-align: center; margin-bottom:10px">
+            This is an unreleased tool currently under development. Features and data may be missing or incorrect.
+          </div>
           <!-- Crusade Selector -->
           <div id="crusade-selector">
-            <span v-for="(c in crusade_list">
-              <button class="btn btn-outline-primary shadow-none crusade-button-lg"
-                :class="{ 'active': crusade==c[0] }" 
+            <span v-for="c in crusade_list"><!-- eliminate whitespace
+              --><button class="btn btn-outline-primary shadow-none crusade-button-lg"
+                :class="{ 'active': crusade==c[0] }"
                 :style="{ 'background-image': 'url(assets/icon_'+c[0]+'.jpg)',
                   }"
                 @click="reset_plan(); crusade=c[0]">
                 {{ capitalize(c[0]) }}
-              <button class="btn btn-outline-primary shadow-none crusade-button-sm"
-                v-bind:class="{ 'active': crusade==c[0] }" 
+              </button><button class="btn btn-outline-primary shadow-none crusade-button-sm"
+                v-bind:class="{ 'active': crusade==c[0] }"
                 @click="reset_plan(); crusade=c[0]">
                 {{ capitalize(c[0]) }}
-              </button>
-              </button>
-            </span>
+            </button></span>
           </div>
           <div id="plan">
             <button class="btn btn-sm btn-ui shadow-none" @click=reset_plan>
               Reset
             </button>
-            Current difficulty: +{{ this.current_difficulty }}, 
-            Average difficulty: +{{ this.average_difficulty.toFixed(2) }}
-            <div v-if="debug">
-            <span v-for="(node, index) in nodes">
-              <span class="badge badge-pill"
-                    v-bind:class="{ 'badge-primary': plan.indexOf(node.id)==plan.length-1,
-                                    'badge-secondary': plan.includes(node.id) && plan.indexOf(node.id)<plan.length-1,
-                                    'badge-dark': !plan.includes(node.id)
-                                  }">
-                {{ node.id }}
-              </span>
-            </span>
+            Fragments: {{ this.planned_fragments }}/5
             <br>
-            <span v-for="(node, index) in plan">
-              <span class="badge badge-pill"
-                    v-bind:class="{ 'badge-primary': index==plan.length-1,
-                                    'badge-secondary': index<plan.length-1 }">
-                {{ node }}
-              </span>
-            </span>
-            </div>
-
+            Max difficulty: +{{ this.max_difficulty }},
+            Current difficulty: +{{ this.current_difficulty }},
+            Average difficulty: +{{ this.average_difficulty.toFixed(2) }},
+            Planned loot quality: {{ this.planned_loot_quality }},
+            Planned loot quantity: {{ this.planned_loot_quantity }},
+            Planned loot rarity: {{ this.planned_loot_rarity }},
           </div>
           <div id="map"
                :style="{ 'background-image': 'url(assets/bg_'+crusade+'.jpg)' }"
@@ -139,7 +127,7 @@
                 <!-- actual mission difficulty -->
                 <span v-if="node.id>=0 && connected(node)" class="badge badge-pill badge-primary node-badge node-badge-snapshot">+{{planned_difficulty(node.id)}}</span>
                 <!-- debug modifier -->
-                <span v-if="debug" class="badge badge-pill badge-relic node-badge node-badge-debug" @click="this.console.log(node);">{{node.id}}<br>{{node.fragment}}</span>
+                <span v-if="debug" class="badge badge-pill badge-relic node-badge node-badge-debug" @click="this.console.log(node);"></span>
             </div>
             <!-- Detail Panel -->
             <div id="detail">
@@ -177,21 +165,61 @@
            tabindex="-1"
            @click="hide_minimap()"
            @contextmenu="hide_minimap($event)">
-        <div class="modal-dialog modal-xl modal-dialog-centered"
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
              @click.stop
              @contextmenu.stop>
           <div class="modal-content">
+            <div class="modal-header">
+              {{detail.internal_name}}
+            </div>
             <div class="modal-body"
                  v-if="minimap_modal">
-              <div class="modal-title detail-title">{{detail.internal_name}}</div>
               <div class="minimap-resize-box">
-                <div class="minimap-image"
-                     :style="{ 'background-image': 'url(assets/minimaps/'+crusade+'/'+detail.internal_name+'.png)' }"></div>
+                <div v-if="debug"
+                     style="background-color: #A00; text-align: center; margin-bottom:10px">
+                  X: {{detail.map_x}}, Y: {{detail.map_y}}<br>
+                  frag_x: {{detail.fragment_x}}, frag_y: {{detail.fragment_y}}
                 </div>
+                <div class="minimap-control-block">
+                  <button class="btn btn-outline-primary shadow-none minimap-control"
+                          :class="{ 'active': minimap_vc_visible }"
+                          @click="minimap_vc_visible = !minimap_vc_visible">
+                    {{minimap_vc_visible?"Hide":"Show"}} Crusade Objectives
+                  </button>
+                  <button class="btn btn-outline-primary shadow-none minimap-control"
+                          :class="{ 'active': minimap_objectives_visible }"
+                          @click="minimap_objectives_visible = !minimap_objectives_visible">
+                    {{minimap_objectives_visible?"Hide":"Show"}} Mission Objectives
+                  </button>
+                  <button class="btn btn-outline-primary shadow-none minimap-control"
+                          :class="{ 'active': minimap_enemies_visible }"
+                          @click="minimap_enemies_visible = !minimap_enemies_visible">
+                    {{minimap_enemies_visible?"Hide":"Show"}} Enemies
+                  </button>
+                </div>
+                <div class="minimap-image"
+                     :style="{ 'background-image': 'url(assets/minimaps/'+crusade+'/'+detail.internal_name+'.png)' }">
+                  <div
+                    class="no-select minimap-marker minimap-marker-enemy"
+                    v-if="minimap_enemies_visible"
+                    v-for="enemy_coords in detail.enemies"
+                    v-bind:style="{
+                      'left': transform_map_x_coord(detail_id, enemy_coords[0]) + '%',
+                      'top': transform_map_y_coord(detail_id, enemy_coords[1]) + '%',
+                    }"></div>
+                  <div
+                    class="no-select minimap-marker minimap-marker-fragment"
+                    v-if="minimap_vc_visible && detail.fragment"
+                    v-bind:style="{
+                      'left': transform_map_x_coord(detail_id, detail.fragment_x) + '%',
+                      'top': transform_map_y_coord(detail_id, detail.fragment_y) + '%',
+                    }"></div>
+                </div>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button"
-                      class="btn btn-secondary mx-auto d-block"
+                      class="btn btn-secondary mx-auto d-block minimap-control minimap-close-button"
                       @click="hide_minimap()"
                 >Close</button>
             </div>
