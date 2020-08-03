@@ -3,98 +3,101 @@
 from copy import deepcopy
 import os
 import re
+import sys
 
 from parse_vc import flatten_name
-from fsm import FSM
+from fsm import FSM, FSMError
 from enum import Enum
 
-AUG_DEFAULTS = {
+AUGMENT_DEFAULTS = {
   'fragment_x': 0,
   'fragment_y': 0,
   'fragment': 0,
+  'skulls': [],
   'map_x': 0,
   'map_y': 0,
   'map_w': 1,
   'map_h': 1,
-  'req_unlocks': [],
-  'opt_unlocks': [],
-  'enemies': [],
+  'req_unlocks': [], 
+  'opt_unlocks': [], 
+  'enemies': [], 
 }
 
-_S = Enum('_S','TOP VC_INTEL')
+class MapParser():
+  def __init__(self, file=None):
+    self.data = {}
+    if file is not None:
+      self.parse_map(file)
 
-def set_script_index(M,D):
-  D['script_index'] = int(M[0])
-  return _S.VC_INTEL
+  def parse_line(self, line):
+    if len(line)==0 or line[0]=='#':
+      return
+    lhs,rhs = line.split('=')
 
-def set_intel_position(M,D):
-  if int(M[0])==D['script_index']:
-    D['fragment_x'],D['fragment_y'] = float(M[1]),float(M[2])
-    D['fragment'] = 1
-    return None
-  return _S.TOP
+    lhs_parts = lhs.split('.')
+    target = self.data
+    for part in lhs_parts[:-1]:
+      name_and_index = part.split('[')
+      name = name_and_index[0]
+      if len(name_and_index)==1:
+        if name not in target:
+          target[name] = {}
+        target = target[name]
+      else:
+        index = int(name_and_index[1][:-1]) # strip trailing ']'
+        if name not in target:
+          target[name] = []
+        target = target[name]
+        target.extend([dict() for _ in range(len(target),index+1)])
+        target = target[index]
+    target[lhs_parts[-1]] = rhs
 
-def set_map_width(M,D):
-  D['map_w'] = float(M[0]) - D['map_x']
-
-def set_map_height(M,D):
-  D['map_h'] = float(M[0]) - D['map_y']
-
-def set_map_origin(M,D):
-  D['map_'+str.lower(M[0])] = float(M[1])
-
-def add_enemy(M,D):
-  x,y = [float(_) for _ in M[0].split(';')]
-  #print('Added enemy at ('+str(x)+', '+str(y)+')')
-  D['enemies'].append( [x,y] )
-
-def set_property(M,D):
-  section,index,property,value = M[0:4]
-  if section not in D:
-    D[section] = {}
-  if index not in D[section]:
-    D[section][index] = {}
-  D[section][index][property] = value
-
-def conditional_exit_vc_intel(M,D):
-  if int(M[0])==D['script_index']:
-    return None
-  return _S.TOP
-
-machine = {
-  _S.TOP: [
-    (r'scriptdata\[(\d+)\]\.template=VoidCrusadeIntel', set_script_index),
-    #(r'(fragment)\[(\d+)\]\.([^=]*)=(.*)', set_property),
-    #(r'(chest)\[(\d+)\]\.([^=]*)=(.*)', set_property),
-    (r'soldiergroup\[\d+\]\.position=(.*)', add_enemy),
-    (r'border00\.(.)=(.*)', set_map_origin),
-    (r'border11\.x=(.*)', set_map_width),
-    (r'border11\.y=(.*)', set_map_height),
-    (r'.*', None)
-  ],
-  _S.VC_INTEL: [
-    # FIXME: This is incorrect.
-    # The correct position is the possition of the Intel Dummy, which is
-    # a section of the intel scriptdata entity
-    (r'scriptdata\[(\d+)\]\.pos=([^;]*);(.*)', set_intel_position),
-    (r'.*', lambda M,D: _S.TOP)
-  ],
-}
-
+  def parse_map(self, file):
+    while True:
+      rawline = file.readline()
+      if rawline=='':
+        return self.data
+      line = rawline.strip()
+      self.parse_line(line)
 
 def parse_map(file):
-  fsm = FSM(_S, _S.TOP, [_S.TOP], machine)
-  fsm.reset()
-  fsm.data = deepcopy(AUG_DEFAULTS)
-  fsm.data['script_index'] = -1
-  #fsm.tracing(1)
-  fsm.parse(file)
-  #if fsm.data['script_index']<0:
-  #  return None
-  #else:
-  return fsm.data
+  return MapParser(file).data
 
-def get_map_data(file):
-  map = parse_map(file)
+def augment_mission(mission, data):
+  mission.update(deepcopy(AUGMENT_DEFAULTS))
 
-  return map
+  mission['map_x'] = float(data['border00']['x'])
+  mission['map_y'] = float(data['border00']['y'])
+  mission['map_w'] = float(data['border11']['x']) - mission['map_x']
+  mission['map_h'] = float(data['border11']['y']) - mission['map_y']
+  if 'scriptdata' in data:
+    for script in data['scriptdata']:
+      # info fragment
+      if script['template']=='VoidCrusadeIntel':
+        for param in script['params']:
+          if param['name']=='Intel':
+            mission['fragment'] = True
+            x,y = [float(_) for _ in param['pos'].split(';')]
+            mission['fragment_x'] = x
+            mission['fragment_y'] = y
+      # servo skull
+      elif script['template']=='VC_Servoskull':
+        for param in script['params']:
+          if param['name']=='SpawnPoint':
+            # These are formatted bizarrely, e.g.:
+            #   scriptdata[7].params[2].[0]pos=439.0032;-673.5509
+            for k,v in param.items():
+              if k.endswith('pos'):
+                mission['skulls'].append([float(_) for _ in v.split(';')])
+  # enemies
+  for enemy in data['soldiergroup']:
+    mission['enemies'].append([float(_) for _ in enemy['position'].split(';')])
+
+
+if __name__=='__main__':
+  with open(sys.argv[1]) as f:
+    d = MapParser(f).data
+  print(len(d))
+  print(d.keys())
+  print(d['border00']['x'])
+  print(d['scriptdata'][5]['params'][1]['pos'])

@@ -8,7 +8,7 @@ function CrusadeInfo(nodes, index, x, y) {{
   this.y = y;
 }}
 
-function NodeInfo(id, internal_name, x, y, map_x, map_y, map_w, map_h, difficulty, servo, fragment, fragment_x, fragment_y, loot_quality, loot_quantity, loot_rarity, faction, appearance, objective, deps, enemies) {{
+function NodeInfo(id, internal_name, x, y, map_x, map_y, map_w, map_h, difficulty, servo, fragment, fragment_x, fragment_y, loot_quality, loot_quantity, loot_rarity, faction, appearance, objective, deps, skulls, enemies) {{
   // id: crusade-unique identifier for this mission
   // internal_name: the original neocore name for the mission, canonicalized
   // x: x-coordinate, in % from left
@@ -41,6 +41,7 @@ function NodeInfo(id, internal_name, x, y, map_x, map_y, map_w, map_h, difficult
   this.appearance = appearance;
   this.objective = objective;
   this.deps = deps;
+  this.skulls = skulls;
   this.enemies = enemies;
 }}
 
@@ -77,13 +78,15 @@ NODE_TEMPLATE = '''
     "{appearance}",
     "{objective}",
     [{dep_str}],
+    [{skull_str}],
     [{enemy_str}]),'''
 def format_node(nodeinfo):
   s = NODE_TEMPLATE
   dep_str = ', '.join([str(n) for n in nodeinfo['deps']])
+  skull_str = ', '.join(['['+str(x)+','+str(y)+']' for x,y in nodeinfo['skulls']])
   enemy_str = ', '.join(['['+str(x)+','+str(y)+']' for x,y in nodeinfo['enemies']])
   if nodeinfo['fragment']:
     fragment_bool = 'true'
   else:
     fragment_bool = 'false'
-  return s.format(**nodeinfo, fragment_bool=fragment_bool, dep_str=dep_str, enemy_str=enemy_str)
+  return s.format(**nodeinfo, fragment_bool=fragment_bool, dep_str=dep_str, skull_str=skull_str, enemy_str=enemy_str)

@@ -199,14 +199,25 @@
                 </div>
                 <div class="minimap-image"
                      :style="{ 'background-image': 'url(assets/minimaps/'+crusade+'/'+detail.internal_name+'.png)' }">
+                  <!-- enemy markers -->
                   <div
                     class="no-select minimap-marker minimap-marker-enemy"
                     v-if="minimap_enemies_visible"
-                    v-for="enemy_coords in detail.enemies"
+                    v-for="coords in detail.enemies"
                     v-bind:style="{
-                      'left': transform_map_x_coord(detail_id, enemy_coords[0]) + '%',
-                      'top': transform_map_y_coord(detail_id, enemy_coords[1]) + '%',
+                      'left': transform_map_x_coord(detail_id, coords[0]) + '%',
+                      'top': transform_map_y_coord(detail_id, coords[1]) + '%',
                     }"></div>
+                  <!-- servoskull markers -->
+                  <div
+                    class="no-select minimap-marker minimap-marker-skull"
+                    v-if="minimap_vc_visible"
+                    v-for="coords in detail.skulls"
+                    v-bind:style="{
+                      'left': transform_map_x_coord(detail_id, coords[0]) + '%',
+                      'top': transform_map_y_coord(detail_id, coords[1]) + '%',
+                    }"></div>
+                  <!-- info fragment marker -->
                   <div
                     class="no-select minimap-marker minimap-marker-fragment"
                     v-if="minimap_vc_visible && detail.fragment"

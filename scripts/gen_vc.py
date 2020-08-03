@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from parse_map import get_map_data, AUG_DEFAULTS
+from parse_map import augment_mission, parse_map, AUGMENT_DEFAULTS
 from parse_vc import get_vc_data, flatten_name
 from templates import format_file
 
@@ -18,31 +18,28 @@ def recursively_parse_missions(mission_directory):
   #     ...
   #  \-- Ebony
   #     ...
-  maps = {}
+  missions = {}
 
   for vc_directory in os.listdir(mission_directory):
     vc_dir = os.path.join(mission_directory, vc_directory)
     print(vc_dir)
   #vc_dir = mission_directory
     vc_name = str.lower(os.path.split(os.path.abspath(vc_dir))[-1])
-    maps[vc_name] = {}
+    missions[vc_name] = {}
     for map_file in os.listdir(vc_dir):
       if map_file.endswith('.cfg'):
         with open(os.path.join(vc_dir, map_file)) as f:
           # strip '.cfg' suffix and flatten
           map_name = flatten_name(os.path.split(os.path.abspath(f.name))[-1][:-4])
-          v = get_map_data(f)
-          maps[vc_name][map_name] = v
-          if 'fragment_x' in v:
-            print(map_name, v['fragment_x'], v['fragment_y'])
-  return maps   
+          missions[vc_name][map_name] = parse_map(f)
+  return missions   
 
 def associate_missions_with_ids(crusades, missions):
   name2id = {vc_name:{node['internal_name']:node['id'] for node in vc_info['nodes'].values()} for vc_name,vc_info in crusades.items()}
   # fill in each mission's ID
   for vc_name,vc_info in missions.items():
-    for mission_name, mission_info in vc_info.items():
-      mission_info['id'] = name2id[vc_name][mission_name]
+    for mission_name, map_data in vc_info.items():
+      map_data['id'] = name2id[vc_name][mission_name]
   return missions
 
 def augment_crusade(crusade, missions):
@@ -50,15 +47,13 @@ def augment_crusade(crusade, missions):
   # data parsed from the main void crusade config file.
   for mission_name in crusade['nodes'].keys():
     if mission_name not in missions:
-      mission_info = deepcopy(AUG_DEFAULTS)
+      mission_info = deepcopy(AUGMENT_DEFAULTS)
+      mission_info.update(crusade['nodes'][mission_name])
+      crusade['nodes'][mission_name] = mission_info
       print('Using defaults for',mission_name)
     else:
-      mission_info = missions[mission_name]
-    for key in [
-        'map_x', 'map_y', 'map_w', 'map_h',
-        'fragment_x', 'fragment_y', 'fragment',
-        'req_unlocks', 'opt_unlocks', 'enemies' ]:
-      crusade['nodes'][mission_name][key] = mission_info[key]
+      augment_mission(crusade['nodes'][mission_name], missions[mission_name])
+  
   return crusade
 
 def main(voidcrusade_cfg, mission_dir, outputfile):

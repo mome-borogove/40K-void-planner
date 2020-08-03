@@ -10868,12 +10868,8 @@ h1 {
   background-image: url(../assets/fragment.png);
 }
 
-.minimap-marker-origin {
-  background-image: url(../assets/square.png);
-}
-
-.minimap-marker-origin2 {
-  background-image: url(../assets/square2.png);
+.minimap-marker-skull {
+  background-image: url(../assets/skull.png);
 }
 
 #map {
