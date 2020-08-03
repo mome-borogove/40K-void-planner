@@ -13,14 +13,15 @@ AUGMENT_DEFAULTS = {
   'fragment_x': 0,
   'fragment_y': 0,
   'fragment': 0,
-  'skulls': [],
   'map_x': 0,
   'map_y': 0,
   'map_w': 1,
   'map_h': 1,
   'req_unlocks': [], 
   'opt_unlocks': [], 
-  'enemies': [], 
+  'objective_locs': [[0,0]],
+  'skull_locs': [],
+  'enemy_locs': [], 
 }
 
 class MapParser():
@@ -63,6 +64,87 @@ class MapParser():
 def parse_map(file):
   return MapParser(file).data
 
+def get_multiple_coords(subsection, name=None, type='Dummy'):
+  # For pulling apart coordinates in the form:
+  #   missiondata[i].params[j].pos=x;y
+  # subsection is a list, typically `Xdata[X].params`
+  obj_lists = [get_coords(subsection, name=param['name'], type=type)
+               for param in subsection
+               if (re.match(name+r'[0-9]$', param['name']) is not None)]
+  objs = [pair for coords in obj_lists for pair in coords]
+  return objs
+
+def get_coords(subsection, name=None, type='DummyList'):
+  # For pulling apart coordinates in the form:
+  #   missiondata[i].params[j].[k]pos=x;y
+  # subsection is a list, typically `Xdata[X].params`
+  for param in subsection:
+    if param['type']==type:
+      if name is None or param['name']==name:
+        coords = [[float(_) for _ in v.split(';')]
+                  for k,v in param.items() if k.endswith('pos')]
+        return coords
+  raise Exception('Mission coordinates')
+
+def get_objective_locations(data):
+  mission_type = data['missiondata'][0]['template']
+  mission_params = data['missiondata'][0]['params']
+  if mission_type=='Assassination': # Azure/bonusmission3
+    objs = get_coords(mission_params, name='TargetLocation')
+  elif mission_type=='Bunkerbusting': # Ecru/bonusmission2
+    batteries = get_coords(mission_params, name='LaserBatteryLocation')
+    bunker = get_coords(mission_params, name='BunkerLocation')
+    objs = batteries + bunker
+  elif mission_type=='Datahunt': # Azure/bonusmission2
+    objs = get_multiple_coords(mission_params, name='Clue_')
+  elif mission_type=='Forcefield': # Amber/secretmissionalpha
+    objs = get_multiple_coords(mission_params, name='Clue_')
+  elif mission_type=='GeneratorDestroy': # Ebony/secretmissionbeta
+    objs = get_multiple_coords(mission_params, name='Object ')
+  elif mission_type=='HotPursuit': # Amber/mission11
+    # The target actually runs a pre-defined route, but we're just going to put
+    # a marker at the start location.
+    for param in mission_params:
+      if param['name']=='Route':
+        objs = [[float(_) for _ in param['point[0]'].split(';')]]
+  elif mission_type=='Hunt': # Ivory/endmission3
+    objs = get_coords(mission_params, name='TargetLocation')
+  elif mission_type=='Incursion': # Zircon/bonusmission3
+    objs = get_multiple_coords(mission_params, name='WarpGate')
+  elif mission_type=='IntelPursuit': # Amber/bonusmission3
+    survivor = get_coords(mission_params, name='Ally', type='Dummy')
+    intel = get_coords(mission_params, name='Intel', type='Dummy')
+    objs = survivor + intel
+  elif mission_type=='NurgleHunt': # Viridian/endmission2
+    objs = get_multiple_coords(mission_params, name='Target')
+  elif mission_type=='Nurgle_Infestation': # Viridian/secretmissionalpha
+    objs = get_coords(mission_params, name='NurgleSiteLocation')
+  elif mission_type=='PanicRoom': # Viridian/bonusmission1
+    vip = get_coords(mission_params, name='VIP', type='Dummy')
+    extraction = get_coords(mission_params, name='Extraction')
+    objs = vip + extraction
+  elif mission_type=='Purge':
+    objs = []
+  elif mission_type=='Rescue': # Amber/bonusmission1
+    soldiers = get_multiple_coords(mission_params, name='Group')
+    evac = get_coords(mission_params, name='EvacuationLocation')
+    objs = soldiers + evac
+  elif mission_type=='Siege': # Amber/secretmissionbeta
+    objs = get_coords(mission_params, name='Fortified_Zone')
+  elif (mission_type=='Silencethegun' or
+        mission_type=='SilenceTheGun' or
+        mission_type=='silencethegun'): # Azure/hiddenmission3
+    objs = get_coords(mission_params, name='Gun')
+  elif mission_type=='SporocystAssault': # Ecru/endmission1
+    objs = get_coords(mission_params, name='TargetLocation')
+  elif mission_type=='Tarot_Hunt': # Zircon/endmission2
+    objs = get_coords(mission_params, name='TargetLocation')
+  elif mission_type=='Tarot_Purge':
+    objs = []
+  else:
+    raise Exception('Unknown mission type: '+str(mission_type))
+  return objs
+
 def augment_mission(mission, data):
   mission.update(deepcopy(AUGMENT_DEFAULTS))
 
@@ -88,10 +170,12 @@ def augment_mission(mission, data):
             #   scriptdata[7].params[2].[0]pos=439.0032;-673.5509
             for k,v in param.items():
               if k.endswith('pos'):
-                mission['skulls'].append([float(_) for _ in v.split(';')])
+                mission['skull_locs'].append([float(_) for _ in v.split(';')])
+  # mission objectives
+  mission['objective_locs'] = get_objective_locations(data)
   # enemies
   for enemy in data['soldiergroup']:
-    mission['enemies'].append([float(_) for _ in enemy['position'].split(';')])
+    mission['enemy_locs'].append([float(_) for _ in enemy['position'].split(';')])
 
 
 if __name__=='__main__':

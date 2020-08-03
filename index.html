@@ -30,7 +30,7 @@
       <div class="row">
         <div class="col">
           <h1>40K Inquisitor Void Crusade Planner</h1>
-          <div v-if="debug"
+          <div v-if="beta"
                style="background-color: #A00; text-align: center; margin-bottom:10px">
             This is an unreleased tool currently under development. Features and data may be missing or incorrect.
           </div>
@@ -175,8 +175,7 @@
             <div class="modal-body"
                  v-if="minimap_modal">
               <div class="minimap-resize-box">
-                <div v-if="debug"
-                     style="background-color: #A00; text-align: center; margin-bottom:10px">
+                <div v-if="debug">
                   X: {{detail.map_x}}, Y: {{detail.map_y}}<br>
                   frag_x: {{detail.fragment_x}}, frag_y: {{detail.fragment_y}}
                 </div>
@@ -203,7 +202,16 @@
                   <div
                     class="no-select minimap-marker minimap-marker-enemy"
                     v-if="minimap_enemies_visible"
-                    v-for="coords in detail.enemies"
+                    v-for="coords in detail.enemy_locs"
+                    v-bind:style="{
+                      'left': transform_map_x_coord(detail_id, coords[0]) + '%',
+                      'top': transform_map_y_coord(detail_id, coords[1]) + '%',
+                    }"></div>
+                  <!-- mission objective markers -->
+                  <div
+                    class="no-select minimap-marker minimap-marker-objective"
+                    v-if="minimap_objectives_visible"
+                    v-for="coords in detail.objective_locs"
                     v-bind:style="{
                       'left': transform_map_x_coord(detail_id, coords[0]) + '%',
                       'top': transform_map_y_coord(detail_id, coords[1]) + '%',
@@ -212,7 +220,7 @@
                   <div
                     class="no-select minimap-marker minimap-marker-skull"
                     v-if="minimap_vc_visible"
-                    v-for="coords in detail.skulls"
+                    v-for="coords in detail.skull_locs"
                     v-bind:style="{
                       'left': transform_map_x_coord(detail_id, coords[0]) + '%',
                       'top': transform_map_y_coord(detail_id, coords[1]) + '%',

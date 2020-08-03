@@ -8,7 +8,7 @@ function CrusadeInfo(nodes, index, x, y) {{
   this.y = y;
 }}
 
-function NodeInfo(id, internal_name, x, y, map_x, map_y, map_w, map_h, difficulty, servo, fragment, fragment_x, fragment_y, loot_quality, loot_quantity, loot_rarity, faction, appearance, objective, deps, skulls, enemies) {{
+function NodeInfo(id, internal_name, x, y, map_x, map_y, map_w, map_h, difficulty, servo, fragment, fragment_x, fragment_y, loot_quality, loot_quantity, loot_rarity, faction, appearance, objective, deps, objective_locs, skull_locs, enemy_locs) {{
   // id: crusade-unique identifier for this mission
   // internal_name: the original neocore name for the mission, canonicalized
   // x: x-coordinate, in % from left
@@ -41,8 +41,9 @@ function NodeInfo(id, internal_name, x, y, map_x, map_y, map_w, map_h, difficult
   this.appearance = appearance;
   this.objective = objective;
   this.deps = deps;
-  this.skulls = skulls;
-  this.enemies = enemies;
+  this.objective_locs = objective_locs;
+  this.skull_locs = skull_locs;
+  this.enemy_locs  = enemy_locs ;
 }}
 
 {crusades}
@@ -78,15 +79,17 @@ NODE_TEMPLATE = '''
     "{appearance}",
     "{objective}",
     [{dep_str}],
-    [{skull_str}],
-    [{enemy_str}]),'''
+    [{obj_loc_str}],
+    [{skull_loc_str}],
+    [{enemy_loc_str}]),'''
 def format_node(nodeinfo):
   s = NODE_TEMPLATE
   dep_str = ', '.join([str(n) for n in nodeinfo['deps']])
-  skull_str = ', '.join(['['+str(x)+','+str(y)+']' for x,y in nodeinfo['skulls']])
-  enemy_str = ', '.join(['['+str(x)+','+str(y)+']' for x,y in nodeinfo['enemies']])
+  obj_loc_str = ', '.join(['['+str(x)+','+str(y)+']' for x,y in nodeinfo['objective_locs']])
+  skull_loc_str = ', '.join(['['+str(x)+','+str(y)+']' for x,y in nodeinfo['skull_locs']])
+  enemy_loc_str = ', '.join(['['+str(x)+','+str(y)+']' for x,y in nodeinfo['enemy_locs']])
   if nodeinfo['fragment']:
     fragment_bool = 'true'
   else:
     fragment_bool = 'false'
-  return s.format(**nodeinfo, fragment_bool=fragment_bool, dep_str=dep_str, skull_str=skull_str, enemy_str=enemy_str)
+  return s.format(**nodeinfo, fragment_bool=fragment_bool, dep_str=dep_str, obj_loc_str=obj_loc_str, skull_loc_str=skull_loc_str, enemy_loc_str=enemy_loc_str)

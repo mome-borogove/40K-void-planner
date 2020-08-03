@@ -10872,6 +10872,10 @@ h1 {
   background-image: url(../assets/skull.png);
 }
 
+.minimap-marker-objective {
+  background-image: url(../assets/mission.png);
+}
+
 #map {
   width: 100%;
   height: 0px;

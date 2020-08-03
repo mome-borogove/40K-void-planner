@@ -5,6 +5,7 @@ var app = new Vue({
   el: "#app",
   data: {
     // Non-linkable state
+    beta: true,
     debug: false,
     minimap_modal: false,
     detail_id: 0,
