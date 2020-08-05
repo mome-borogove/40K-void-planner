@@ -33,6 +33,7 @@
           <div v-if="beta"
                style="background-color: #A00; text-align: center; margin-bottom:10px">
             This is an unreleased tool currently under development. Features and data may be missing or incorrect.
+            <br> Currently running in UNLOCKED mode.
           </div>
           <!-- Crusade Selector -->
           <div id="crusade-selector">
@@ -49,18 +50,35 @@
                 {{ capitalize(c[0]) }}
             </button></span>
           </div>
+          <div id="contributed">
+            <div class="btn-group">
+              <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                User-contributed plans for current void crusade:
+              </button>
+              <div class="dropdown-menu">
+                <button class="dropdown-item" type="button"
+                   @click="set_plan([0,1,2,3,4,5])">
+                   &lt;Username&gt;: Minimum Difficulty</a>
+                <button class="dropdown-item" type="button"
+                   @click="set_plan([0,5,4,3,2,1])">
+                   &lt;Username&gt;: Maximum Difficulty</a>
+                <button class="dropdown-item" type="button"
+                   @click="set_plan([0,1])">
+                   &lt;Username&gt;: Loot Farming</a>
+              </div>
+            </div>
+          </div>
           <div id="plan">
             <button class="btn btn-sm btn-ui shadow-none" @click=reset_plan>
               Reset
             </button>
-            Fragments: {{ this.planned_fragments }}/5
-            <br>
+            Fragments: {{ this.planned_fragments }}/5,
             Max difficulty: +{{ this.max_difficulty }},
             Current difficulty: +{{ this.current_difficulty }},
             Average difficulty: +{{ this.average_difficulty.toFixed(2) }},
-            Planned loot quality: {{ this.planned_loot_quality }},
-            Planned loot quantity: {{ this.planned_loot_quantity }},
-            Planned loot rarity: {{ this.planned_loot_rarity }},
+            Loot quality: {{ this.planned_loot_quality }},
+            Loot quantity: {{ this.planned_loot_quantity }},
+            Loot rarity: {{ this.planned_loot_rarity }},
           </div>
           <div id="map"
                :style="{ 'background-image': 'url(assets/bg_'+crusade+'.jpg)' }"

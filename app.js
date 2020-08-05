@@ -93,13 +93,17 @@ var app = new Vue({
       let plan_string = params.get("p");
       if (plan_string) {
         let plan = plan_string.split('-').map(x=>parseInt(x,10));
-        let uniques = Array.from(plan.reduce((acc,val)=>acc.has(val)?acc:acc.set(val,1), new Map()).keys());
-        let n_missions = crusade_data.get(this.crusade).nodes.length;
-        if (plan.length==uniques.length &&
-            plan.length>=1 &&
-            plan.length<=n_missions &&
-            plan.every(x=>!isNaN(x))) {
+        //let uniques = Array.from(plan.reduce((acc,val)=>acc.has(val)?acc:acc.set(val,1), new Map()).keys());
+        //let n_missions = crusade_data.get(this.crusade).nodes.length;
+        //if (plan.length==uniques.length &&
+        //    plan.length>=1 &&
+        //    plan.length<=n_missions &&
+        //    plan.every(x=>!isNaN(x))) {
+        if (this.validate_plan(plan)) {
           this.plan = plan;
+          console.log("Plan set: "+String(plan));
+        } else {
+          console.log("Invalid plan specified. Reverting to default.");
         }
       } else {
         console.log("Invalid plan specified. Reverting to default.");
@@ -132,6 +136,23 @@ var app = new Vue({
     reset_plan: function() {
       this.plan = [0];
       this.detail_id = 0;
+    },
+    set_plan: function(plan) {
+      if( this.validate_plan(plan) ) {
+        this.plan = plan;
+      }
+    },
+    validate_plan: function(plan) {
+      let uniques = Array.from(plan.reduce((acc,val)=>acc.has(val)?acc:acc.set(val,1), new Map()).keys());
+      let n_missions = crusade_data.get(this.crusade).nodes.length;
+      if (plan.length==uniques.length &&
+          plan.length>=1 &&
+          plan.length<=n_missions &&
+          plan.every(x=>!isNaN(x))) {
+          // FIXME: Add checking for out-of-range plan indices
+        return true;
+      }
+      return false;
     },
     show_minimap: function(event, id) {
       event.preventDefault();
@@ -202,6 +223,10 @@ var app = new Vue({
       return this.connected_using_plan(node, this.plan);
     },
     connected_using_plan: function(node, plan) {
+      // FIXME: This function temporarily disabled for collaborative planning.
+      //        Make sure to re-enable it before going live.
+      return true;
+
       //console.log('Is '+String(node.id)+' connected? (deps: '+String(node.deps)+')');
       //console.log(plan);
       if (plan.includes(node.id)) {
