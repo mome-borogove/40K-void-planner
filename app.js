@@ -69,7 +69,7 @@ var app = new Vue({
       return this.plan.reduce( (acc,id) => acc+this.nodes[id].loot_rarity, 0)
     },
     planned_fragments: function() {
-      return this.plan.reduce( (acc,id) => this.nodes[id].fragment?acc+1:acc, 0)
+      return this.plan.reduce( (acc,id) => this.nodes[id].fragments.length>0?acc+1:acc, 0)
     },
     max_difficulty: function() {
       return this.plan.reduce( (acc,id) => this.planned_difficulty(id)>acc?this.planned_difficulty(id):acc );

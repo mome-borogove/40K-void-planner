@@ -121,7 +121,7 @@
                 <!-- servoskull available icon -->
                 <div class="icon node-icon node-icon-servo" v-if="node.servo"></div>
                 <!-- info fragment icon -->
-                <div class="icon node-icon node-icon-fragment" v-if="node.fragment"></div>
+                <div class="icon node-icon node-icon-fragment" v-if="node.fragments.length>0"></div>
                 <!-- difficulty modifier -->
                 <span v-if="node.difficulty>0" class="badge badge-pill badge-danger node-badge node-badge-difficulty">+{{node.difficulty}}</span>
                 <!-- actual mission difficulty -->
@@ -144,7 +144,7 @@
                 </div>
                 <div class="detail-fact">
                   <span class="detail-fact-label">Objective:</span>
-                  <span class="detail-fact-data">{{ detail.objective }}</span>
+                  <span class="detail-fact-data">{{ detail.objective_type }}</span>
                 </div>
               </span>
             </div>
@@ -177,7 +177,7 @@
               <div class="minimap-resize-box">
                 <div v-if="debug">
                   X: {{detail.map_x}}, Y: {{detail.map_y}}<br>
-                  frag_x: {{detail.fragment_x}}, frag_y: {{detail.fragment_y}}
+                  frag_x: {{detail.fragments[0][1]}}, frag_y: {{detail.fragments[0][2]}}
                 </div>
                 <div class="minimap-control-block">
                   <button class="btn btn-outline-primary shadow-none minimap-control"
@@ -202,36 +202,36 @@
                   <div
                     class="no-select minimap-marker minimap-marker-enemy"
                     v-if="minimap_enemies_visible"
-                    v-for="coords in detail.enemy_locs"
+                    v-for="coords in detail.enemies"
                     v-bind:style="{
-                      'left': transform_map_x_coord(detail_id, coords[0]) + '%',
-                      'top': transform_map_y_coord(detail_id, coords[1]) + '%',
+                      'left': transform_map_x_coord(detail_id, coords[1]) + '%',
+                      'top': transform_map_y_coord(detail_id, coords[2]) + '%',
                     }"></div>
                   <!-- mission objective markers -->
                   <div
                     class="no-select minimap-marker minimap-marker-objective"
                     v-if="minimap_objectives_visible"
-                    v-for="coords in detail.objective_locs"
+                    v-for="coords in detail.objectives"
                     v-bind:style="{
-                      'left': transform_map_x_coord(detail_id, coords[0]) + '%',
-                      'top': transform_map_y_coord(detail_id, coords[1]) + '%',
+                      'left': transform_map_x_coord(detail_id, coords[1]) + '%',
+                      'top': transform_map_y_coord(detail_id, coords[2]) + '%',
                     }"></div>
                   <!-- servoskull markers -->
                   <div
                     class="no-select minimap-marker minimap-marker-skull"
                     v-if="minimap_vc_visible"
-                    v-for="coords in detail.skull_locs"
+                    v-for="coords in detail.skulls"
                     v-bind:style="{
-                      'left': transform_map_x_coord(detail_id, coords[0]) + '%',
-                      'top': transform_map_y_coord(detail_id, coords[1]) + '%',
+                      'left': transform_map_x_coord(detail_id, coords[1]) + '%',
+                      'top': transform_map_y_coord(detail_id, coords[2]) + '%',
                     }"></div>
                   <!-- info fragment marker -->
                   <div
                     class="no-select minimap-marker minimap-marker-fragment"
-                    v-if="minimap_vc_visible && detail.fragment"
+                    v-if="minimap_vc_visible && detail.fragments.length>0"
                     v-bind:style="{
-                      'left': transform_map_x_coord(detail_id, detail.fragment_x) + '%',
-                      'top': transform_map_y_coord(detail_id, detail.fragment_y) + '%',
+                      'left': transform_map_x_coord(detail_id, detail.fragments[0][1]) + '%',
+                      'top': transform_map_y_coord(detail_id, detail.fragments[0][2]) + '%',
                     }"></div>
                 </div>
               </div>

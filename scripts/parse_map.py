@@ -10,18 +10,23 @@ from fsm import FSM, FSMError
 from enum import Enum
 
 AUGMENT_DEFAULTS = {
-  'fragment_x': 0,
-  'fragment_y': 0,
-  'fragment': 0,
+  # Temporary
+  'map_unlock_flags': [], 
+  'has_dataslate': False,
+  'needs_dataslate': True,
+
+  # Permanent
   'map_x': 0,
   'map_y': 0,
   'map_w': 1,
   'map_h': 1,
-  'req_unlocks': [], 
-  'opt_unlocks': [], 
-  'objective_locs': [[0,0]],
-  'skull_locs': [],
-  'enemy_locs': [], 
+  # Markers
+  # [] means the mission doesn't have this marker
+  # [['string',x,y], ...] means 1+ markers exist, the string describes it
+  'objectives': [],
+  'fragments': [],
+  'skulls': [],
+  'enemies': [], 
 }
 
 class MapParser():
@@ -143,7 +148,28 @@ def get_objective_locations(data):
     objs = []
   else:
     raise Exception('Unknown mission type: '+str(mission_type))
+
+  # FIXME: don't do this
+  objs = [['Objective',*_] for _ in objs]
+  print(objs)
   return objs
+
+#  'map_unlock_flags': [],
+#  'has_dataslate': False,
+#  'needs_dataslate': True,
+
+
+def get_unlocks(mission, data):
+  unlocks = []
+  # FIXME: NYI
+
+  # dataslate terminal
+  # dataslate drop
+  # stormwatcher
+  # intel beacon
+  # completion
+
+  return mission
 
 def augment_mission(mission, data):
   mission.update(deepcopy(AUGMENT_DEFAULTS))
@@ -158,10 +184,8 @@ def augment_mission(mission, data):
       if script['template']=='VoidCrusadeIntel':
         for param in script['params']:
           if param['name']=='Intel':
-            mission['fragment'] = True
-            x,y = [float(_) for _ in param['pos'].split(';')]
-            mission['fragment_x'] = x
-            mission['fragment_y'] = y
+            mission['fragments'] = [['Info Fragment'] +
+                                    [float(_) for _ in param['pos'].split(';')]]
       # servo skull
       elif script['template']=='VC_Servoskull':
         for param in script['params']:
@@ -170,12 +194,14 @@ def augment_mission(mission, data):
             #   scriptdata[7].params[2].[0]pos=439.0032;-673.5509
             for k,v in param.items():
               if k.endswith('pos'):
-                mission['skull_locs'].append([float(_) for _ in v.split(';')])
+                mission['skulls'].append(['Possible Servoskull Spawn'] +
+                                         [float(_) for _ in v.split(';')])
   # mission objectives
-  mission['objective_locs'] = get_objective_locations(data)
+  mission['objectives'] = get_objective_locations(data)
   # enemies
   for enemy in data['soldiergroup']:
-    mission['enemy_locs'].append([float(_) for _ in enemy['position'].split(';')])
+    mission['enemies'].append([enemy['name']] + 
+                              [float(_) for _ in enemy['position'].split(';')])
 
 
 if __name__=='__main__':

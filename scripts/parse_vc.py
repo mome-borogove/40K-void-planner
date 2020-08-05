@@ -31,7 +31,7 @@ translation = {
     'Normal': 'normal',
     'Secret': 'secret',
   },
-  'objective': {
+  'objective_type': {
     'Assassination': 'Assassination',
     'Bunkerbusting': 'Bunker busting',
     'Datahunt': 'Data hunt',
@@ -56,6 +56,11 @@ translation = {
 }
 
 NODE_DEFAULTS = {
+  # Temporary
+  'node_unlock_flags': [], # completion unlocks flag, flat list
+  'needs_unlock_flags': [], # Unlock flags required to complete this mission.
+
+  # Permanent
   # Apparently there's a single Ivory map without a difficulty setting.
   # It appears as a +1, but it doesn't actually apply the difficulty.
   # So we'll leave it as a 0.
@@ -63,7 +68,7 @@ NODE_DEFAULTS = {
   'loot_quality': 0,
   'loot_quantity': 0,
   'loot_rarity': 0,
-  'unlock_flags': [],
+  'node_unlocks': [],
 }
 
 def flatten_name(s):
@@ -131,8 +136,11 @@ def translate_value(key, M,D):
 def set_neighbors(M,D):
   D['node']['neighbors'] = M[0].split(',')
 
-def set_unlock_flags(M,D):
-  D['node']['unlock_flags'] = M[0].split(',')
+def set_needs_unlock_flags(M,D):
+  D['node']['needs_unlock_flags'] = M[0].split(',')
+
+def set_node_unlock_flags(M,D):
+  D['node']['node_unlock_flags'] = M[0].split(',')
 
 def commit_node(M,D):
   D['vc']['nodes'][D['node_name']] = D['node']
@@ -164,11 +172,12 @@ machine = {
     (r'Type=(.*)', lambda M,D: translate_value('appearance',M,D)),
     (r'Pos=(.*)', set_node_position),
     (r'MonsterSetting=(.*)', lambda M,D: translate_value('faction',M,D)),
-    (r'MissionType=(.*)', lambda M,D: translate_value('objective',M,D)),
+    (r'MissionType=(.*)', lambda M,D: translate_value('objective_type',M,D)),
     (r'Neighbours=(.*)', set_neighbors),
     (r'Difficulty=(.*)', lambda M,D: set_node_value('difficulty',M,D)),
     (r'CanSpawnWS=(.*)', lambda M,D: set_node_value('servo',M,D)),
-    (r'Unlocks=(.*)', set_unlock_flags),
+    (r'Unlocks=(.*)', set_needs_unlock_flags),
+    (r'AddUnlock=(.*)', set_node_unlock_flags),
     (r'BonusLootQuality=(.*)', lambda M,D: set_node_value('loot_quality',M,D)),
     (r'BonusLootQuantity=(.*)', lambda M,D: set_node_value('loot_quantity',M,D)),
     (r'BonusLootRarity=(.*)', lambda M,D: set_node_value('loot_rarity',M,D)),
@@ -210,7 +219,7 @@ def add_start_node(crusade):
   start_node['x'] = crusade['x']
   start_node['y'] = crusade['y']
   start_node['faction'] = 'N/A'
-  start_node['objective'] = 'N/A'
+  start_node['objective_type'] = 'N/A'
   start_node['servo'] = 0
   start_node['difficulty'] = 0
   start_node['appearance'] = 'start'

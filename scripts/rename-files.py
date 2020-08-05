@@ -2,8 +2,10 @@
 
 from parse_vc import flatten_name
 
-mission_names = ['ivory','ebony','ecru','amber','viridian','azure','zircon',
-                 'iv','eb','ec','am','vi','az','zi']
+mission_names = [
+  'ivory','ebony','ecru','amber','viridian','azure','zircon','violet',
+  'iv','eb','ec','am','vi','az','zi','vlt'
+]
 
 import re
 import os.path
